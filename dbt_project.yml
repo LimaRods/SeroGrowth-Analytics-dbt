@@ -36,6 +36,8 @@ clean-targets:         # directories to be removed by `dbt clean`
 # using the `{{ config(...) }}` macro.
 
 models:
+  sero_analytics:
+    +database: solstice_analytics
   staging:
     +materialized: view
   intermediate:

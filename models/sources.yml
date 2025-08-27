@@ -1,0 +1,52 @@
+version: 2
+
+sources:
+  - name: internal
+    database: solstice_raw
+    schema: internal
+    config: 
+      freshness: # default freshness
+        warn_after: {count: 15, period: minute}
+        error_after: {count: 24, period: hour}
+      loaded_at_field: ingested_at # changed to config in v1.10
+
+    tables:
+      - name: usx_mint_redeem
+        columns:
+          - name: id
+            data_tests:
+              - unique
+              - not_null
+
+      - name: usx_vault
+        columns:
+          - name: id
+            data_tests:
+              - unique
+              - not_null
+
+      - name:  yield_vault
+        columns:
+          - name: id
+            data_tests:
+              - unique
+              - not_null
+
+      - name: usx_yield_transfer
+        columns:
+          - name: id
+            data_tests:
+              - unique
+              - not_null
+
+      - name: token_mint_burn
+        columns:
+          - name: id
+            data_tests:
+              - unique
+              - not_null  
+
+        
+
+        
+        
