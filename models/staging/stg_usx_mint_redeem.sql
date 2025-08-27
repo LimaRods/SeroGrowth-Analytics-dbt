@@ -4,10 +4,10 @@ SELECT
     signature,
     requestor,
     collateral_mint,
-    collateral_amount,
-    redeemable_mint,
-    redeemable_amount,
-    type,
-    ingested_at
+    CASE
+        WHEN  type = 'CONFIRM_MINT' THEN collateral_amount
+        ELSE -1 * collateral_amount 
+    END AS amount,
+    type
 FROM
     {{ source('internal', 'usx_mint_redeem') }}
