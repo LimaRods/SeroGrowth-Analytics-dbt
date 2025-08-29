@@ -6,6 +6,7 @@
             'Abjx9zzdatgA18ezxRhveJVU65T7NbKqiByremdpQVR1') THEN 'USX'
         WHEN {{ mint_address }} IN ('Gkt9h4QWpPBDtbaF5HvYKCc87H5WCRTUtMf77HdTGHB',
             '2RSo4tLSFHrco9bwboomq9CGEvnPEVoBSkqZSh87xq1j') THEN 'eUSX'
+            WHEN {{mint_address}} IN ('4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU') THEN 'TokenN'
         ELSE 'UNKNOWN'
     END
 {% endmacro %}

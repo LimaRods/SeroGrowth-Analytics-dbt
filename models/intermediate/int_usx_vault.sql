@@ -3,11 +3,11 @@ SELECT
     timestamp_ntz,
     signature,
     user,
-    collateral_mint,
+    {{ token_metadata('collateral_mint') }} AS symbol,
     collateral_sender_vault,
     amount,
     custodian,
     stable_depository,
     type
 FROM
-    {{ source('internal', 'usx_vault') }}
+    {{ ref('stg_usx_vault') }}

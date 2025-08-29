@@ -15,26 +15,33 @@ with base as (
     group by 1,2
 ),
 
--- all dates × tokens
+
 date_bounds AS (
-    SELECT 
+    SELECT
         MIN(date) AS min_date,
         MAX(date) AS max_date
     FROM base
 ),
 
-calendar_token AS (
-    SELECT 
-        DATEADD(day, seq4(), db.min_date) AS date,
-        t.symbol
+
+all_dates AS (
+    SELECT
+        DATEADD(day, SEQ4(), db.min_date) AS date
     FROM date_bounds db,
-         TABLE(GENERATOR(ROWCOUNT => 1000)) -- <-- generate more than enough days
-         AS seq
-    CROSS JOIN (
-        SELECT DISTINCT symbol
-        FROM base
-    ) t
-    WHERE DATEADD(day, seq4(), db.min_date) <= db.max_date -- filter to actual range
+         TABLE(GENERATOR(ROWCOUNT => 20000)) 
+    WHERE DATEADD(day, SEQ4(), db.min_date) <= db.max_date
+),
+
+
+all_symbols AS (
+    SELECT DISTINCT symbol FROM base
+),
+
+-- Full calendar: dates × tokens
+calendar_token AS (
+    SELECT d.date, s.symbol
+    FROM all_dates d
+    CROSS JOIN all_symbols s
 ),
 
 daily as (

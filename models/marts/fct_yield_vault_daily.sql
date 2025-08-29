@@ -1,67 +1,100 @@
-with base as (
-    select
-        date_trunc('day', timestamp_ntz) as date,
+WITH vault_events AS (
+    SELECT
+        DATE_TRUNC('day', timestamp_ntz) AS date,
         symbol,
-        sum(case when type = 'LOCK' then amount else 0 end) as daily_mints,
-        sum(case when type = 'UNLOCK' then amount else 0 end) as daily_redeems,
-        sum(
-            CASE
-                WHEN type = 'LOCK' then amount 
-                WHEN type = 'UNLOCK' then -amount 
-            ELSE 0 
-        END
-        ) as daily_netflow
-    from {{ ref('int_yield_vault') }}
-    group by 1,2
+        SUM(CASE WHEN type = 'LOCK' THEN amount ELSE 0 END) AS daily_mints,
+        SUM(CASE WHEN type = 'UNLOCK' THEN amount ELSE 0 END) AS daily_redeems,
+        SUM(CASE 
+            WHEN type = 'LOCK' THEN amount 
+            WHEN type = 'UNLOCK' THEN -amount 
+            ELSE 0 END
+        ) AS daily_netflow
+    FROM {{ ref('int_yield_vault') }}
+    GROUP BY 1, 2
 ),
 
--- all dates × tokens
-date_bounds AS (
-    SELECT 
-        MIN(date) AS min_date,
-        MAX(date) AS max_date
-    FROM base
+-- It doesn't mint eUSX
+harvest_inflows AS (
+    SELECT
+        DATE_TRUNC('day', timestamp_ntz) AS date,
+        symbol,
+        SUM(amount) AS daily_mints,
+        0 AS daily_redeems,
+        SUM(amount) AS daily_netflow
+    FROM {{ ref('int_usx_yield_transfer') }}
+    GROUP BY 1, 2
 ),
 
-calendar_token AS (
-    SELECT 
-        DATEADD(day, seq4(), db.min_date) AS date,
-        t.symbol
-    FROM date_bounds db,
-         TABLE(GENERATOR(ROWCOUNT => 1000)) -- <-- generate more than enough days
-         AS seq
-    CROSS JOIN (
-        SELECT DISTINCT symbol
-        FROM base
-    ) t
-    WHERE DATEADD(day, seq4(), db.min_date) <= db.max_date -- filter to actual range
+
+base AS (
+    SELECT * FROM vault_events
+    UNION ALL
+    SELECT * FROM harvest_inflows
 ),
 
-daily as (
-    select
-        c.date,
-        c.symbol,
-        coalesce(b.daily_mints, 0) as daily_mints,
-        coalesce(b.daily_redeems, 0) as daily_redeems,
-        coalesce(b.daily_netflow, 0) as daily_netflow
-    from calendar_token c
-    left join base b
-        on c.date = b.date and c.symbol = b.symbol
-),
 
--- Add cumulative metrics
-final as (
-    select
+aggregated AS (
+    SELECT
         date,
         symbol,
-        daily_mints AS daily_deposits,
-        daily_redeems AS daily_withdrawals,
-        sum(daily_mints) over (partition by symbol order by date) as cumulative_deposits,
-        sum(daily_redeems) over (partition by symbol order by date ) as cumulative_withdrawals,
-        sum(daily_netflow) over (partition by symbol order by date ) as total_tokens_locked
-    from daily
+        SUM(daily_mints) AS daily_mints,
+        SUM(daily_redeems) AS daily_redeems,
+        SUM(daily_netflow) AS daily_netflow
+    FROM base
+    GROUP BY 1, 2
+),
+
+date_bounds AS (
+    SELECT
+        MIN(date) AS min_date,
+        MAX(date) AS max_date
+    FROM aggregated
+),
+
+all_dates AS (
+    SELECT
+        DATEADD(day, SEQ4(), db.min_date) AS date
+    FROM date_bounds db,
+         TABLE(GENERATOR(ROWCOUNT => 20000))  -- ~54 years; increase if needed
+    WHERE DATEADD(day, SEQ4(), db.min_date) <= db.max_date
+),
+
+
+all_symbols AS (
+    SELECT DISTINCT symbol FROM aggregated
+),
+
+-- Full calendar: dates × tokens
+calendar_token AS (
+    SELECT d.date, s.symbol
+    FROM all_dates d
+    CROSS JOIN all_symbols s
+),
+
+daily AS (
+    SELECT
+        c.date,
+        c.symbol,
+        COALESCE(a.daily_mints, 0) AS daily_deposits,
+        COALESCE(a.daily_redeems, 0) AS daily_withdrawals,
+        COALESCE(a.daily_netflow, 0) AS daily_netflow
+    FROM calendar_token c
+    LEFT JOIN aggregated a
+        ON c.date = a.date AND c.symbol = a.symbol
+),
+
+final AS (
+    SELECT
+        date,
+        symbol,
+        daily_deposits,
+        daily_withdrawals,
+        SUM(daily_deposits) OVER (PARTITION BY symbol ORDER BY date) AS cumulative_deposits,
+        SUM(daily_withdrawals) OVER (PARTITION BY symbol ORDER BY date) AS cumulative_withdrawals,
+        SUM(daily_netflow) OVER (PARTITION BY symbol ORDER BY date) AS total_tokens_locked
+    FROM daily
 )
 
-select *
-from final
-order by date, symbol
+SELECT *
+FROM final
+ORDER BY date, symbol
