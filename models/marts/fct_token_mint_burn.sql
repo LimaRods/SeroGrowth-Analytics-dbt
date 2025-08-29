@@ -2,16 +2,16 @@ with base as (
     select
         date_trunc('day', timestamp_ntz) as date,
         symbol,
-        sum(case when type = 'CONFIRM_MINT' then amount else 0 end) as daily_mints,
-        sum(case when type = 'CONFIRM_REDEEM' then amount else 0 end) as daily_redeems,
+        sum(case when type = 'MINT' then amount else 0 end) as daily_mints,
+        sum(case when type = 'BURN' then amount else 0 end) as daily_burns,
         sum(
             CASE
-                WHEN type = 'CONFIRM_MINT' then amount 
-                WHEN type = 'CONFIRM_REDEEM' then -amount 
+                WHEN type = 'MINT' then amount 
+                WHEN type = 'BURN' then -amount 
             ELSE 0 
         END
-        ) as daily_netflow
-    from {{ ref('int_usx_mint_redeem') }}
+        ) as daily_supply
+    from {{ ref('int_token_mint_burn') }}
     group by 1,2
 ),
 
@@ -42,8 +42,8 @@ daily as (
         c.date,
         c.symbol,
         coalesce(b.daily_mints, 0) as daily_mints,
-        coalesce(b.daily_redeems, 0) as daily_redeems,
-        coalesce(b.daily_netflow, 0) as daily_netflow
+        coalesce(b.daily_burns, 0) as daily_burns,
+        coalesce(b.daily_supply, 0) as supply
     from calendar_token c
     left join base b
         on c.date = b.date and c.symbol = b.symbol
@@ -54,11 +54,11 @@ final as (
     select
         date,
         symbol,
-        daily_mints AS daily_deposits,
-        daily_redeems AS daily_withdrawals,
-        sum(daily_mints) over (partition by symbol order by date) as cumulative_deposits,
-        sum(daily_redeems) over (partition by symbol order by date ) as cumulative_withdrawals,
-        sum(daily_netflow) over (partition by symbol order by date ) as total_tokens_locked
+        daily_mints,
+        daily_burns,
+        sum(daily_mints) over (partition by symbol order by date) as cumulative_mints,
+        sum(daily_burns) over (partition by symbol order by date ) as cumulative_burns,
+        sum(supply) over (partition by symbol order by date ) as total_supply
     from daily
 )
 

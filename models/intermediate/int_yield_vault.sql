@@ -4,7 +4,9 @@ SELECT
     timestamp_ntz,
     user,
     asset_mint,
+    {{ token_metadata('asset_mint') }} AS symbol,
     amount,
-    type,
+    type
+
 FROM
-    {{ source("internal","yield_vault") }}
+    {{ ref('stg_yield_vault') }}

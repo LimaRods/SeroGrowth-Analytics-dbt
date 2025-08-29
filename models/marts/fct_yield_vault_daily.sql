@@ -2,16 +2,16 @@ with base as (
     select
         date_trunc('day', timestamp_ntz) as date,
         symbol,
-        sum(case when type = 'CONFIRM_MINT' then amount else 0 end) as daily_mints,
-        sum(case when type = 'CONFIRM_REDEEM' then amount else 0 end) as daily_redeems,
+        sum(case when type = 'LOCK' then amount else 0 end) as daily_mints,
+        sum(case when type = 'UNLOCK' then amount else 0 end) as daily_redeems,
         sum(
             CASE
-                WHEN type = 'CONFIRM_MINT' then amount 
-                WHEN type = 'CONFIRM_REDEEM' then -amount 
+                WHEN type = 'LOCK' then amount 
+                WHEN type = 'UNLOCK' then -amount 
             ELSE 0 
         END
         ) as daily_netflow
-    from {{ ref('int_usx_mint_redeem') }}
+    from {{ ref('int_yield_vault') }}
     group by 1,2
 ),
 
