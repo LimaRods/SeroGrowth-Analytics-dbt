@@ -19,7 +19,7 @@ with base as (
 date_bounds AS (
     SELECT
         MIN(date) AS min_date,
-        MAX(date) AS max_date
+        MAX(CURRENT_DATE()) AS max_date
     FROM base
 ),
 

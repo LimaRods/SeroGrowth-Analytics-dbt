@@ -4,11 +4,11 @@ WITH events AS (
         user,
         symbol,
         CASE 
-            WHEN type = 'CONFIRM_MINT'   THEN amount
-            WHEN type = 'CONFIRM_REDEEM' THEN -amount
+            WHEN type = 'LOCK'   THEN amount
+            WHEN type = 'UNLOCK' THEN -amount
             ELSE 0
         END AS netflow
-    FROM {{ ref('stg_usx_mint_redeem') }}
+    FROM {{ ref('stg_yield_vault') }}
 ),
 
 -- 1) Netflow per day / user / token
@@ -37,7 +37,7 @@ first_deposit_pairs AS (
 date_bounds AS (
     SELECT 
         MIN(date) AS min_date,
-        MAX(date) AS max_date
+        MAX(CURRENT_DATE()) AS max_date
     FROM daily_changes
 ),
 
