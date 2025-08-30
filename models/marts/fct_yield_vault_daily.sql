@@ -9,7 +9,7 @@ WITH vault_events AS (
             WHEN type = 'UNLOCK' THEN -amount 
             ELSE 0 END
         ) AS daily_netflow
-    FROM {{ ref('int_yield_vault') }}
+    FROM {{ ref('stg_yield_vault') }}
     GROUP BY 1, 2
 ),
 
@@ -21,7 +21,7 @@ harvest_inflows AS (
         SUM(amount) AS daily_mints,
         0 AS daily_redeems,
         SUM(amount) AS daily_netflow
-    FROM {{ ref('int_usx_yield_transfer') }}
+    FROM {{ ref('stg_usx_yield_transfer') }}
     GROUP BY 1, 2
 ),
 
@@ -52,11 +52,13 @@ date_bounds AS (
 ),
 
 all_dates AS (
-    SELECT
-        DATEADD(day, SEQ4(), db.min_date) AS date
-    FROM date_bounds db,
-         TABLE(GENERATOR(ROWCOUNT => 20000))  -- ~54 years; increase if needed
-    WHERE DATEADD(day, SEQ4(), db.min_date) <= db.max_date
+    SELECT DATEADD(day, n, db.min_date) AS date
+    FROM date_bounds db
+    JOIN LATERAL (
+        SELECT SEQ4() AS n
+        FROM TABLE(GENERATOR(ROWCOUNT => 20000)) 
+    ) seq
+    WHERE DATEADD(day, n, db.min_date) <= db.max_date
 ),
 
 

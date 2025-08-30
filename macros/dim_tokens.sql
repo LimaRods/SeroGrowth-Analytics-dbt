@@ -1,25 +1,56 @@
-{% macro token_metadata(mint_address) %}
-    CASE 
-        WHEN {{ mint_address }} IN ('5dXXpWyZCCPhBHxmp79Du81t7t9oh7HacUW864ARFyft') THEN 'USDT'
-        WHEN {{ mint_address }} IN ('8iBux2LRja1PhVZph8Rw4Hi45pgkaufNEiaZma5nTD5g') THEN 'USDC'
-        WHEN {{ mint_address }} IN ('7QC4zjrKA6XygpXPQCKSS9BmAsEFDJR6awiHSdgLcDvS', 
-            'Abjx9zzdatgA18ezxRhveJVU65T7NbKqiByremdpQVR1') THEN 'USX'
-        WHEN {{ mint_address }} IN ('Gkt9h4QWpPBDtbaF5HvYKCc87H5WCRTUtMf77HdTGHB',
-            '2RSo4tLSFHrco9bwboomq9CGEvnPEVoBSkqZSh87xq1j') THEN 'eUSX'
-            WHEN {{mint_address}} IN ('4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU') THEN 'TokenN'
-        ELSE 'UNKNOWN'
-    END
+
+--  Token dictionary: edit this when replacing the tokens
+{% macro token_meta_map() %}
+  {%- set TOKENS = {
+    '5dXXpWyZCCPhBHxmp79Du81t7t9oh7HacUW864ARFyft': {'symbol': 'USDT',  'decimals': 6},
+    '8iBux2LRja1PhVZph8Rw4Hi45pgkaufNEiaZma5nTD5g': {'symbol': 'USDC',  'decimals': 6},
+    '7QC4zjrKA6XygpXPQCKSS9BmAsEFDJR6awiHSdgLcDvS': {'symbol': 'USX',   'decimals': 6},
+    'Abjx9zzdatgA18ezxRhveJVU65T7NbKqiByremdpQVR1': {'symbol': 'USX',   'decimals': 6},
+    'Gkt9h4QWpPBDtbaF5HvYKCc87H5WCRTUtMf77HdTGHB': {'symbol': 'eUSX',   'decimals': 6},
+    '2RSo4tLSFHrco9bwboomq9CGEvnPEVoBSkqZSh87xq1j': {'symbol': 'eUSX',   'decimals': 6},
+    '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU': {'symbol': 'TokenN', 'decimals': 6}
+  } -%}
+  {{ return(TOKENS) }}
 {% endmacro %}
 
+-- CASE emitter
+{% macro token_metadata(mint_expr, field='symbol') %}
+  {% set tokens = token_meta_map() %}
+  CASE
+  {% for addr, meta in tokens.items() %}
+    WHEN LOWER({{ mint_expr }}) = '{{ addr|lower }}' THEN
+      {% if field == 'symbol' %}
+        '{{ meta['symbol'] }}'
+      {% elif field == 'decimals' %}
+        {{ meta['decimals'] if meta['decimals'] is not none else 'NULL' }}
+      {% else %}
+        NULL
+      {% endif %}
+  {% endfor %}
+    ELSE {{ "'UNKNOWN'" if field == 'symbol' else 'NULL' }}
+  END
+{% endmacro %}
 
-{% macro token_decimals(mint_address) %}
-    CASE 
-        WHEN {{ mint_address }} = '5dXXpWyZCCPhBHxmp79Du81t7t9oh7HacUW864ARFyft' THEN 6
-        WHEN {{ mint_address }} = '8iBux2LRja1PhVZph8Rw4Hi45pgkaufNEiaZma5nTD5g' THEN 6
-        WHEN {{ mint_address }} = '7QC4zjrKA6XygpXPQCKSS9BmAsEFDJR6awiHSdgLcDvS' THEN 6
-        WHEN {{ mint_address }} = 'Abjx9zzdatgA18ezxRhveJVU65T7NbKqiByremdpQVR1' THEN 6
-        WHEN {{ mint_address }} = 'Gkt9h4QWpPBDtbaF5HvYKCc87H5WCRTUtMf77HdTGHB' THEN 6
-        WHEN {{ mint_address }} = '2RSo4tLSFHrco9bwboomq9CGEvnPEVoBSkqZSh87xq1j' THEN 6
-        ELSE NULL
-    END
+-- Token metadata emitter
+{% macro token_symbol(mint_expr) %}
+  {{ token_metadata(mint_expr, 'symbol') }}
+{% endmacro %}
+
+{% macro token_decimals(mint_expr) %}
+  {{ token_metadata(mint_expr, 'decimals') }}
+{% endmacro %}
+
+-- Token amount adjustment
+{% macro token_scale(mint_expr, default_decimals=6) %}
+  POWER(
+    10,
+    COALESCE({{ token_decimals(mint_expr) }}, {{ default_decimals }})
+  )
+{% endmacro %}
+
+{% macro token_amount_adj(amount_expr, mint_expr, precision=38, scale=18, default_decimals=6) %}
+  CAST(
+    ( {{ amount_expr }} / {{ token_scale(mint_expr, default_decimals) }} )
+    AS NUMBER({{ precision }}, {{ scale }})
+  )
 {% endmacro %}

@@ -11,7 +11,7 @@ with base as (
             ELSE 0 
         END
         ) as daily_supply
-    from {{ ref('int_token_mint_burn') }}
+    from {{ ref('stg_token_mint_burn') }}
     group by 1,2
 ),
 
@@ -25,12 +25,15 @@ date_bounds AS (
 
 
 all_dates AS (
-    SELECT
-        DATEADD(day, SEQ4(), db.min_date) AS date
-    FROM date_bounds db,
-         TABLE(GENERATOR(ROWCOUNT => 20000)) 
-    WHERE DATEADD(day, SEQ4(), db.min_date) <= db.max_date
+    SELECT DATEADD(day, n, db.min_date) AS date
+    FROM date_bounds db
+    JOIN LATERAL (
+        SELECT SEQ4() AS n
+        FROM TABLE(GENERATOR(ROWCOUNT => 20000)) 
+    ) seq
+    WHERE DATEADD(day, n, db.min_date) <= db.max_date
 ),
+
 
 
 all_symbols AS (

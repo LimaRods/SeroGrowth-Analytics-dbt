@@ -11,7 +11,7 @@ WITH usx_vault_events as (
             ELSE 0 
         END
         ) as daily_netflow
-    from {{ ref('int_usx_mint_redeem') }}
+    from {{ ref('stg_usx_mint_redeem') }}
     group by 1,2
 ),
 
@@ -29,7 +29,7 @@ vault_operation_events AS (
             ELSE 0 
         END
         ) as daily_netflow
-    FROM {{ ref('int_usx_vault') }}
+    FROM {{ ref('stg_usx_vault') }}
     GROUP BY 1, 2
 ),
 

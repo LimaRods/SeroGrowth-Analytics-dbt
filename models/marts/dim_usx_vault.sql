@@ -8,7 +8,7 @@ WITH events AS (
             WHEN type = 'CONFIRM_REDEEM' THEN -amount
             ELSE 0
         END AS netflow
-    FROM {{ ref('int_usx_mint_redeem') }}
+    FROM {{ ref('stg_usx_mint_redeem') }}
 ),
 
 -- 1) Netflow per day / user / token
@@ -22,7 +22,7 @@ daily_changes AS (
     GROUP BY 1, 2, 3
 ),
 
--- 2) First positive deposit date per (user, token)
+
 first_deposit_pairs AS (
     SELECT
         user,
@@ -33,7 +33,7 @@ first_deposit_pairs AS (
     GROUP BY 1, 2
 ),
 
--- 3) Global bounds for calendar
+-- Global bounds for calendar
 date_bounds AS (
     SELECT 
         MIN(date) AS min_date,
@@ -41,16 +41,18 @@ date_bounds AS (
     FROM daily_changes
 ),
 
--- 4) All dates (generated independently; constant ROWCOUNT)
+
 all_dates AS (
-    SELECT DATEADD(day, SEQ4(), db.min_date) AS date
-    FROM date_bounds db,
-         TABLE(GENERATOR(ROWCOUNT => 20000))  -- bump if needed
-    WHERE DATEADD(day, SEQ4(), db.min_date) <= db.max_date
+    SELECT DATEADD(day, n, db.min_date) AS date
+    FROM date_bounds db
+    JOIN LATERAL (
+        SELECT SEQ4() AS n
+        FROM TABLE(GENERATOR(ROWCOUNT => 20000)) 
+    ) seq
+    WHERE DATEADD(day, n, db.min_date) <= db.max_date
 ),
 
--- 5) FULL calendar = dates × (user, token) via CROSS JOIN,
---    then trimmed to start on each pair's first deposit
+
 calendar_user_token AS (
     SELECT
         d.date,
@@ -75,7 +77,7 @@ calendar_with_changes AS (
      AND dc.symbol = c.symbol
 ),
 
--- 7) Cumulative balance per (user, token) over the full calendar
+
 balance_timeseries AS (
     SELECT
         date,
@@ -85,7 +87,7 @@ balance_timeseries AS (
     FROM calendar_with_changes
 )
 
--- 8) Output (optional: filter zeros)
+-- Output (optional: filter zeros)
 SELECT
     date,
     user,

@@ -3,8 +3,9 @@ SELECT
     timestamp_ntz,
     signature,
     from_address AS user,
-    mint,
-    amount,
+    mint AS token_mint_address,
+    {{ token_symbol('mint') }} AS symbol,
+    {{ token_amount_adj('amount','mint') }} AS amount, 
     type
 FROM
     {{ source('internal', 'token_mint_burn') }}

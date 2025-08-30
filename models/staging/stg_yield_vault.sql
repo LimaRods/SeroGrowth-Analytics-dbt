@@ -3,8 +3,9 @@ SELECT
     signature,
     timestamp_ntz,
     user,
-    asset_mint,
-    amount,
+    asset_mint AS token_mint_address,
+    {{ token_symbol('asset_mint') }} AS symbol,
+    {{ token_amount_adj('amount','asset_mint') }} AS amount, 
     type,
 FROM
     {{ source("internal","yield_vault") }}
