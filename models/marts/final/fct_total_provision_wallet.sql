@@ -1,10 +1,9 @@
 SELECT
-    date,
     user,
     protocol,
     venue,
     symbol,
-    tokens_locked 
+    total_tokens_locked 
 
 FROM (
     SELECT 
@@ -23,4 +22,4 @@ FROM (
         {{ ref("fct_yield_vault_wallet")}}
 )
 
-ORDER BY date, user, venue
+ORDER BY user, venue
