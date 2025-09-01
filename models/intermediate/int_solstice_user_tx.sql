@@ -1,9 +1,12 @@
 SELECT
-    user,
+    timestamp_ntz,
+    signature,
     protocol,
     venue,
+    user,
     symbol,
-    total_tokens_locked 
+    amount,
+    type
 
 FROM (
     SELECT 
@@ -11,7 +14,7 @@ FROM (
     'USX Vault' AS venue,
     'Solstice' AS protocol,
     FROM
-        {{ ref("fct_usx_vault_wallet")}}
+        {{ ref("stg_usx_mint_redeem")}}
     UNION ALL
 
     SELECT 
@@ -19,7 +22,7 @@ FROM (
     'Yield Vault (eUSX)' AS venue,
     'Solstice' AS protocol,
     FROM
-        {{ ref("fct_yield_vault_wallet")}}
+        {{ ref("stg_yield_vault")}}
 )
 
-ORDER BY user, venue
+ORDER BY timestamp_ntz DESC

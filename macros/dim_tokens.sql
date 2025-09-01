@@ -7,7 +7,7 @@
     '7QC4zjrKA6XygpXPQCKSS9BmAsEFDJR6awiHSdgLcDvS': {'symbol': 'USX',   'decimals': 6},
     'Abjx9zzdatgA18ezxRhveJVU65T7NbKqiByremdpQVR1': {'symbol': 'USX',   'decimals': 6},
     '6FrrzDk5mQARGc1TDYoyVnSyRdds1t4PbtohCD6p3tgG': {'symbol': 'USX',   'decimals': 6},
-    'Gkt9h4QWpPBDtbaF5HvYKCc87H5WCRTUtMf77HdTGHB': {'symbol': 'eUSX',   'decimals': 6},
+    'Gkt9h4QWpPBDtbaF5HvYKCc87H5WCRTUtMf77HdTGHBt': {'symbol': 'eUSX',   'decimals': 6},
     '2RSo4tLSFHrco9bwboomq9CGEvnPEVoBSkqZSh87xq1j': {'symbol': 'eUSX',   'decimals': 6},
     '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU': {'symbol': 'eUSX', 'decimals': 6},
     'YG6SXWt43x6KHGELkjRug8WxL64hsGVzQ6V22zsbJJ4': {'symbol': 'Token2', 'decimals': 6}

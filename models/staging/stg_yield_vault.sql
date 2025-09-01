@@ -1,7 +1,7 @@
 SELECT
     id,
-    signature,
     timestamp_ntz,
+    signature,
     user,
     asset_mint AS token_mint_address,
     {{ token_symbol('asset_mint') }} AS symbol,
