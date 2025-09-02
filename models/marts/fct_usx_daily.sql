@@ -1,6 +1,6 @@
 WITH usx_vault_events as (
     select
-        date_trunc('day', timestamp_ntz) as date,
+        DATE_TRUNC('day', timestamp_ntz) AS date,
         symbol,
         sum(case when type = 'CONFIRM_MINT' then amount else 0 end) as daily_mints,
         sum(case when type = 'CONFIRM_REDEEM' then amount else 0 end) as daily_redeems,
