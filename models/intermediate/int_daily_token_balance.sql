@@ -5,9 +5,9 @@ WITH base AS (
     symbol,
     token_mint_address,
     amount,                                    -- already humanized (decimals adjusted) in STG
-    CAST(start_ts AS DATE)         AS start_date,
-    CAST(end_ts   AS DATE)         AS end_date,
-    COALESCE(CAST(end_ts AS DATE), CURRENT_DATE()) AS end_date_c  -- inclusive end
+    DATE(start_ts)        AS start_date,
+    DATE(end_ts)         AS end_date,
+    COALESCE(DATE(end_ts), CURRENT_DATE()) AS end_date_c  -- inclusive end
   FROM {{ ref('stg_token_balances') }}
   -- Optional whitelist (keep if desired)
   -- WHERE symbol IN ('USX','eUSX')
@@ -59,7 +59,7 @@ daily_positions AS (
   -- (threshold model: the highest active threshold equals the balance that day)
   SELECT
     c.date,
-    c."user",
+    c.user,
     c.symbol,
     MAX(b.amount) AS token_balance
   FROM calendar_user_token c
@@ -76,4 +76,4 @@ SELECT
   symbol,
   COALESCE(token_balance, 0) AS token_balance
 FROM daily_positions
-ORDER BY date, user, symbol;
+ORDER BY date, user, symbol
