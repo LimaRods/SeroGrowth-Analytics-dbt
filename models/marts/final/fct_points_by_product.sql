@@ -8,6 +8,10 @@ FROM (
         protocol,
         symbol,
         symbol AS product_symbol,
+        token_balance,
+        null AS amount_x,
+        null AS amount_y,
+        token_balance AS total_liquidity,
         base_points,
         total_points AS overall_points
 
@@ -22,6 +26,10 @@ FROM (
         protocol,
         pool_symbol AS symbol,
         protocol || ': ' || symbol AS product_symbol,
+        null AS token_balance,
+        amount_x,
+        amount_y,
+        total_liquidity,
         base_points,
         total_points AS overall_points
 
