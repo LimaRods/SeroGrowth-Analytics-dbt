@@ -50,7 +50,6 @@ with
             'Solstice' as protocol,
             symbol,
             token_balance,
-            holding_streak_days,
             {{ base_multiplier("symbol") }} as base_mult,
             token_balance * {{ base_multiplier("symbol") }} as base_points,
             {{ loyalty_multiplier("holding_streak_days") }} as loyalty_mult,
