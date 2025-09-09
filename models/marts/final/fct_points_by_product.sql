@@ -12,7 +12,10 @@ FROM (
         null AS amount_x,
         null AS amount_y,
         token_balance AS total_liquidity,
+        base_mult,
         base_points,
+        overall_mult_nocap,
+        overall_mult,
         total_points AS overall_points
 
     FROM
@@ -30,7 +33,10 @@ FROM (
         amount_x,
         amount_y,
         total_liquidity,
+        base_mult,
         base_points,
+        overall_mult_nocap,
+        overall_mult,
         total_points AS overall_points
 
     FROM
