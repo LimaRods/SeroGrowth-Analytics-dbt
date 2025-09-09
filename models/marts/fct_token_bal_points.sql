@@ -1,73 +1,77 @@
-WITH base AS (
-  SELECT
-    date,
-    user,                 
-    symbol,
-    COALESCE(token_balance, 0) AS token_balance
-  FROM {{ ref('int_daily_token_balance') }}
-),
+with
+    base as (
+        select date, user, symbol, coalesce(token_balance, 0) as token_balance
+        from {{ ref("int_daily_token_balance") }}
+    ),
 
--- 1) Flag whether the user is holding on that day
-flags AS (
-  SELECT
-      *,
-      CASE WHEN token_balance > 1e-9 THEN 1 ELSE 0 END AS is_holding
-  FROM base
-),
+    -- 1) Flag whether the user is holding on that day
+    flags as (
+        select *, case when token_balance > 1e-9 then 1 else 0 end as is_holding
+        from base
+    ),
 
--- 2) Build a "reset id": it increases by 1 each time we see a non-holding day.
---    For any consecutive run of holding days, this id stays constant.
-with_resets AS (
-  SELECT
-      *,
-      SUM(CASE WHEN is_holding = 0 THEN 1 ELSE 0 END)
-        OVER (PARTITION BY user, symbol ORDER BY date
-              ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS reset_id
-  FROM flags
-),
+    -- 2) Build a "reset id": it increases by 1 each time we see a non-holding day.
+    -- For any consecutive run of holding days, this id stays constant.
+    with_resets as (
+        select
+            *,
+            sum(case when is_holding = 0 then 1 else 0 end) over (
+                partition by user, symbol
+                order by date
+                rows between unbounded preceding and current row
+            ) as reset_id
+        from flags
+    ),
 
--- 3) For holding days, the streak is the row_number within its current reset_id group.
---    For non-holding days, streak = 0.
-holding_days AS (
-    SELECT
-        date,
-        user,
-        symbol,
-        token_balance,
-        CASE
-        WHEN is_holding = 1 THEN
-            ROW_NUMBER() OVER (PARTITION BY user, symbol, reset_id ORDER BY date)
-        ELSE 0
-        END AS holding_streak_days
-    FROM with_resets
-),
+    -- 3) For holding days, the streak is the row_number within its current reset_id
+    -- group.
+    -- For non-holding days, streak = 0.
+    holding_days as (
+        select
+            date,
+            user,
+            symbol,
+            token_balance,
+            case
+                when is_holding = 1
+                then
+                    row_number() over (
+                        partition by user, symbol, reset_id order by date
+                    )
+                else 0
+            end as holding_streak_days
+        from with_resets
+    ),
 
-points_calculation AS (
-    SELECT
-      date,
-      user,
-      'Solstice' AS protocol,
-      symbol,
-      token_balance,
-      holding_streak_days,
-      {{ base_multiplier("symbol") }} AS base_mult,
-      token_balance * {{ base_multiplier("symbol") }} AS base_points,
-      {{ loyalty_multiplier('holding_streak_days') }} AS loyalty_mult,
-      {{ base_multiplier("symbol") }} *  {{ loyalty_multiplier('holding_streak_days') }} AS overall_mult_nocap, --Add more multipliers
-      CASE
-        WHEN {{ base_multiplier("symbol") }} *  {{ loyalty_multiplier('holding_streak_days') }} > 10
-        THEN 10 ELSE {{ base_multiplier("symbol") }} *  {{ loyalty_multiplier('holding_streak_days') }}
-    END AS overall_mult, --Add more multipliers
-      {{ loyalty_tier_label('holding_streak_days') }} AS loyalty_label
+    points_calculation as (
+        select
+            date,
+            user,
+            'Solstice' as protocol,
+            symbol,
+            token_balance,
+            holding_streak_days,
+            {{ base_multiplier("symbol") }} as base_mult,
+            token_balance * {{ base_multiplier("symbol") }} as base_points,
+            {{ loyalty_multiplier("holding_streak_days") }} as loyalty_mult,
+            {{ base_multiplier("symbol") }}
+            * {{ loyalty_multiplier("holding_streak_days") }} as overall_mult_nocap,  -- Add more multipliers
+            case
+                when
+                    {{ base_multiplier("symbol") }}
+                    * {{ loyalty_multiplier("holding_streak_days") }}
+                    > 10
+                then 10
+                else
+                    {{ base_multiplier("symbol") }}
+                    * {{ loyalty_multiplier("holding_streak_days") }}
+            end as overall_mult,  -- Add more multipliers
+            {{ loyalty_tier_label("holding_streak_days") }} as loyalty_label,
+            holding_streak_days
 
-     
-    FROM
-        holding_days
-)
+        from holding_days
+    )
 
-SELECT
-    *,
-    base_points * overall_mult AS total_points, 
-FROM
-    points_calculation
-ORDER BY date, user, symbol
+select *, base_points * overall_mult as total_points,
+from points_calculation
+order by date, user, symbol
