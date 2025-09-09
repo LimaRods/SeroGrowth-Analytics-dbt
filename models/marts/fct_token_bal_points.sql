@@ -49,7 +49,6 @@ points_calculation AS (
       'Solstice' AS protocol,
       symbol,
       token_balance,
-      holding_streak_days,
       {{ base_multiplier('Solstice', symbol) }} AS base_mult,
       token_balance * {{ base_multiplier('Solstice', symbol) }} AS base_points,
       {{ loyalty_multiplier('holding_streak_days') }} AS loyalty_mult,
@@ -58,7 +57,8 @@ points_calculation AS (
         WHEN {{ base_multiplier('Solstice', symbol) }} *  {{ loyalty_multiplier('holding_streak_days') }} > 10
         THEN 10 ELSE {{ base_multiplier('Solstice', symbol) }} *  {{ loyalty_multiplier('holding_streak_days') }}
     END AS overall_mult, --Add more multipliers
-      {{ loyalty_tier_label('holding_streak_days') }} AS loyalty_label
+      {{ loyalty_tier_label('holding_streak_days') }} AS loyalty_label,
+      holding_streak_days
 
      
     FROM
