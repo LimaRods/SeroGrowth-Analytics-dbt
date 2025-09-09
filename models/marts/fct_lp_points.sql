@@ -107,7 +107,7 @@ points_calculation AS (
       {{ base_multiplier('protocol','pool_symbol') }} * {{ loyalty_multiplier('holding_streak_days') }} AS overall_mult,
       total_liquidity * (
         {{ base_multiplier('protocol','pool_symbol') }} * {{ loyalty_multiplier('holding_streak_days') }}
-      ) AS points_with_loyalty
+      ) AS total_points,
 
   FROM holding_days
 )

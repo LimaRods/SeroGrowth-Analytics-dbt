@@ -8,7 +8,8 @@ FROM (
         protocol,
         symbol,
         symbol AS product_symbol,
-        points_with_loyalty AS overall_points
+        base_points,
+        total_points AS overall_points
 
     FROM
         {{  ref('fct_token_bal_points')}}
@@ -21,7 +22,8 @@ FROM (
         protocol,
         pool_symbol AS symbol,
         protocol || ': ' || symbol AS product_symbol,
-        points_with_loyalty AS overall_points
+        base_points,
+        total_points AS overall_points
 
     FROM
         {{  ref('fct_lp_points')}}
