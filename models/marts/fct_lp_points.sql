@@ -107,7 +107,8 @@ points_calculation AS (
         THEN 10 ELSE {{ base_multiplier('protocol','pool_symbol') }} *  {{ loyalty_multiplier('holding_streak_days') }}
     END AS overall_mult, --Add more multipliers
      
-      {{ loyalty_tier_label('holding_streak_days') }}                                      AS loyalty_label
+      {{ loyalty_tier_label('holding_streak_days') }}                                      AS loyalty_label,
+      holding_streak_days
   FROM holding_days
 )
 

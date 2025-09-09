@@ -16,7 +16,8 @@ FROM (
         base_points,
         overall_mult_nocap,
         overall_mult,
-        total_points AS overall_points
+        total_points AS overall_points,
+        holding_streak_days
 
     FROM
         {{  ref('fct_token_bal_points')}}
@@ -37,7 +38,8 @@ FROM (
         base_points,
         overall_mult_nocap,
         overall_mult,
-        total_points AS overall_points
+        total_points AS overall_points,
+        holding_streak_days
 
     FROM
         {{  ref('fct_lp_points')}}
