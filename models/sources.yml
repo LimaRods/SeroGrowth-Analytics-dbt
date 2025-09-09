@@ -49,7 +49,29 @@ sources:
           - name: id
             data_tests:
               - unique
-              - not_null  
+              - not_null 
+
+
+      - name: token_balances
+        columns:
+          - name: id
+            data_tests:
+              - unique
+              - not_null
+
+      - name: liquidity_clmm
+        columns:
+          - name: id
+            data_tests:
+              - unique
+              - not_null
+
+      - name: liquidity_cpmm
+        columns:
+          - name: id
+            data_tests:
+            - unique
+            - not_null    
 
         
 
