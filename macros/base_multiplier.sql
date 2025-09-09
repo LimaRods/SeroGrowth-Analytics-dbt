@@ -1,26 +1,50 @@
-{% macro base_multiplier(protocol_expr, product_expr) %}
--- Returns a SQL CASE expression; pass literals or columns, e.g.:
---   {{ base_multiplier("'Solstice'", "symbol") }}
---   {{ base_multiplier('protocol', 'product') }}
-(
-  CASE
-    WHEN {{ protocol_expr }} = 'Solstice' THEN
-      CASE
-        WHEN {{ product_expr }} = 'USX'  THEN 3
-        WHEN {{ product_expr }} = 'eUSX' THEN 1
-        ELSE 1
-      END
+{% macro base_multiplier(protocol, product) %}
+  {# Keep case; just trim & unify "-" to "/" #}
+  {% set proto = (protocol ~ '') | trim %}
+  {% set prod  = (product  ~ '') | trim %}
+  {% set prod_norm = prod | replace('-', '/') | trim %}
 
-    WHEN {{ protocol_expr }} IN ('Orca','Raydium','Meteora') THEN
-      CASE
-        WHEN {{ product_expr }} = 'eUSX/USX' THEN 3
-        WHEN {{ product_expr }} IN ('USX/USDC','USX/USDT') THEN 4
-        -- Optional catch-all for any USX/* pool:
-        WHEN LEFT({{ product_expr }}, 4) = 'USX/' THEN 4
-        ELSE 1
-      END
+  {% set MAP = {
+    'Solstice': {
+      'USX': 3,
+      'eUSX': 1
+    },
+    'Orca': {
+      'USX/USDC': 4,
+      'USX/USDT': 4,
+      'eUSX/USX': 3
+    },
+    'Raydium': {
+      'USX/USDC': 4,
+      'USX/USDT': 4,
+      'eUSX/USX': 3
+    },
+    'Meteora': {
+      'USX/USDC': 4,
+      'USX/USDT': 4,
+      'eUSX/USX': 3
+    }
+  } %}
 
-    ELSE 1
-  END
-)
+  {# 1) Exact match #}
+  {% if MAP.get(proto) and MAP[proto].get(prod_norm) %}
+    {{ return(MAP[proto][prod_norm]) }}
+  {% endif %}
+
+  {# 2) Minimal fallbacks matching your rules #}
+  {% if proto in ['Orca','Raydium','Meteora'] %}
+    {% if prod_norm == 'eUSX/USX' %}
+      {{ return(3) }}
+    {% elif prod_norm.startswith('USX/') %}
+      {{ return(4) }}
+    {% endif %}
+  {% elif proto == 'Solstice' %}
+    {% if prod_norm == 'USX' %}
+      {{ return(3) }}
+    {% elif prod_norm == 'eUSX' %}
+      {{ return(1) }}
+    {% endif %}
+  {% endif %}
+
+  {{ return(1) }}
 {% endmacro %}

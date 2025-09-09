@@ -46,6 +46,7 @@ points_calculation AS (
     SELECT
       date,
       user,
+      'Solstice' AS protocol,
       symbol,
       token_balance,
       holding_streak_days,

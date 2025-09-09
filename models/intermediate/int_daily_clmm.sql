@@ -69,11 +69,11 @@ daily_lp AS (
 )
 
 SELECT
-  date,
+ , date,
   user,
   pool_type,
   pool_symbol,
-  COALESCE(amount_x, 0)  AS amount_x,
+  COALESCE(amount_x, 0)  AS amount_x
   COALESCE(amount_y, 0)  AS amount_y
   --COALESCE(lp_amount, 0) AS lp_amount
 FROM daily_lp
