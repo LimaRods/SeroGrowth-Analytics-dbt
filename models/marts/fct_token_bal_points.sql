@@ -54,7 +54,7 @@ points_calculation AS (
       token_balance * {{ base_multiplier('Solstice', symbol) }} AS base_points,
       {{ loyalty_multiplier('holding_streak_days') }} AS loyalty_mult,
       {{ base_multiplier('Solstice', symbol) }} *  {{ loyalty_multiplier('holding_streak_days') }} AS overall_mult,
-      (token_balance * {{ base_multiplier('Solstice', symbol) }}) * {{ loyalty_multiplier('holding_streak_days') }} AS points_with_loyalty,
+      (token_balance * {{ base_multiplier('Solstice', symbol) }}) * {{ loyalty_multiplier('holding_streak_days') }} AS total_points, --Add more multipliers
       {{ loyalty_tier_label('holding_streak_days') }} AS loyalty_label
 
      
