@@ -9,5 +9,3 @@ SELECT
 
 FROM
     {{ source('internal','token_balances')}}
-WHERE
-    token IN ('7QC4zjrKA6XygpXPQCKSS9BmAsEFDJR6awiHSdgLcDvS', 'Gkt9h4QWpPBDtbaF5HvYKCc87H5WCRTUtMf77HdTGHBt') -- USX/eUSX Replace that with a macro

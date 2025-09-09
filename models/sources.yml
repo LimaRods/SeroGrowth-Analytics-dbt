@@ -59,12 +59,19 @@ sources:
               - unique
               - not_null
 
-      - name: liquidity_positions
+      - name: liquidity_clmm
         columns:
           - name: id
             data_tests:
               - unique
-              - not_null    
+              - not_null
+
+      - name: liquidity_cpmm
+        columns:
+          - name: id
+            data_tests:
+            - unique
+            - not_null    
 
         
 
