@@ -71,7 +71,35 @@ sources:
           - name: id
             data_tests:
             - unique
-            - not_null    
+            - not_null
+
+      - name: quest_completions
+        columns:
+          - name: id
+            data_tests:
+            - unique
+            - not_null
+
+      - name: quests
+        columns:
+          - name: id
+            data_tests:
+            - unique
+            - not_null
+
+      - name: users
+        columns:
+          - name: id
+            data_tests:
+            - unique
+            - not_null
+
+      - name: user_addresses
+        columns:
+          - name: id
+            data_tests:
+            - unique
+            - not_null         
 
         
 
