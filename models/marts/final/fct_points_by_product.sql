@@ -43,6 +43,28 @@ FROM (
 
     FROM
         {{  ref('fct_lp_points')}}
+
+    UNION ALL
+
+    SELECT
+        date,
+        user,
+        protocol,
+        symbol,
+        protocol || ': ' || symbol AS product_symbol,
+        position_amount AS token_balance,
+        null AS amount_x,
+        null AS amount_y,
+        position_amount AS total_liquidity,
+        base_mult,
+        base_points,
+        overall_mult_nocap,
+        overall_mult,
+        total_points AS overall_points,
+        holding_streak_days
+
+    FROM
+        {{  ref('fct_expo_positions_points')}}
 )
 
 ORDER BY date, product_symbol, overall_points DESC

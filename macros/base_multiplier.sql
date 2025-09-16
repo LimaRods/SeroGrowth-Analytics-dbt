@@ -6,6 +6,7 @@ CASE
   WHEN {{ symbol_col }} = 'eUSX'       THEN 1
   WHEN {{ symbol_col }} = 'eUSX/USX'   THEN 3
   WHEN {{ symbol_col }} LIKE 'USX/%'   THEN 4
+  WHEN {{ symbol_col }} LIKE '%Expo LP%'   THEN 3
   ELSE 1
 END
 
