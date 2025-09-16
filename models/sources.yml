@@ -99,7 +99,14 @@ sources:
           - name: id
             data_tests:
             - unique
-            - not_null         
+            - not_null
+
+      - name: exponent_liquidity_positions
+        columns:
+          - name: id
+            data_tests:
+            - unique
+            - not_null             
 
         
 

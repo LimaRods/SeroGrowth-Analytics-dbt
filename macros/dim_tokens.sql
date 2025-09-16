@@ -10,7 +10,8 @@
     'Gkt9h4QWpPBDtbaF5HvYKCc87H5WCRTUtMf77HdTGHBt': {'symbol': 'eUSX',   'decimals': 6},
     '2RSo4tLSFHrco9bwboomq9CGEvnPEVoBSkqZSh87xq1j': {'symbol': 'eUSX',   'decimals': 6},
     '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU': {'symbol': 'eUSX', 'decimals': 6},
-    'YG6SXWt43x6KHGELkjRug8WxL64hsGVzQ6V22zsbJJ4': {'symbol': 'Token2', 'decimals': 6}
+    'YG6SXWt43x6KHGELkjRug8WxL64hsGVzQ6V22zsbJJ4': {'symbol': 'Token2', 'decimals': 6},
+    '9T9KMMKiCTY5TPY164NM3VrS9dvfa4Tuq1nWJK9vF91z': {'symbol': ' Expo LP eUSX','decimals': 6}
 
 
 
