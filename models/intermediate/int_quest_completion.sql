@@ -1,6 +1,7 @@
 SELECT
     qc.id,
-    ua.address,
+    --ua.address,
+    qc.user_id,
     qc.type,
     qc.quest_id,
     qc.source,
@@ -17,7 +18,7 @@ SELECT
 
 FROM
     {{ ref("stg_quest_completions")}} qc
-LEFT JOIN {{ ref("user_addresses")}} ua
-    ON qc.user_id = ua.user_id
+--LEFT JOIN {{ ref("user_addresses")}} ua
+    --ON qc.user_id = ua.user_id
 LEFT JOIN {{ ref("stg_quests")}} q
     ON qc.quest_id = q.id
