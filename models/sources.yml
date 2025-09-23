@@ -21,7 +21,7 @@ sources:
             data_tests:
               - not_null
               - accepted_values:
-                  values: ['CONFIRM_MINT', 'CONFIRM_REDEEM']
+                  values: ['MINT', 'REDEEM']
 
       - name: usx_vault
         columns:
