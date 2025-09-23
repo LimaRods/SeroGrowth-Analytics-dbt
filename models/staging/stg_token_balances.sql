@@ -9,3 +9,4 @@ SELECT
 
 FROM
     {{ source('internal','token_balances')}}
+WHERE  token IN ('6FrrzDk5mQARGc1TDYoyVnSyRdds1t4PbtohCD6p3tgG','3ThdFZQKM6kRyVGLG48kaPg5TRMhYMKY1iCRa9xop1WC') --USX and eUSX

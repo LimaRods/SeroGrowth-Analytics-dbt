@@ -2,16 +2,11 @@
 --  Token dictionary: edit this when replacing the tokens
 {% macro token_meta_map() %}
   {%- set TOKENS = {
-    '5dXXpWyZCCPhBHxmp79Du81t7t9oh7HacUW864ARFyft': {'symbol': 'USDT',  'decimals': 6},
-    '8iBux2LRja1PhVZph8Rw4Hi45pgkaufNEiaZma5nTD5g': {'symbol': 'USDC',  'decimals': 6},
-    '7QC4zjrKA6XygpXPQCKSS9BmAsEFDJR6awiHSdgLcDvS': {'symbol': 'USX',   'decimals': 6},
-    'Abjx9zzdatgA18ezxRhveJVU65T7NbKqiByremdpQVR1': {'symbol': 'USX',   'decimals': 6},
+    'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB': {'symbol': 'USDT',  'decimals': 6},
+    'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': {'symbol': 'USDC',  'decimals': 6},
     '6FrrzDk5mQARGc1TDYoyVnSyRdds1t4PbtohCD6p3tgG': {'symbol': 'USX',   'decimals': 6},
-    'Gkt9h4QWpPBDtbaF5HvYKCc87H5WCRTUtMf77HdTGHBt': {'symbol': 'eUSX',   'decimals': 6},
-    '2RSo4tLSFHrco9bwboomq9CGEvnPEVoBSkqZSh87xq1j': {'symbol': 'eUSX',   'decimals': 6},
-    '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU': {'symbol': 'eUSX', 'decimals': 6},
-    'YG6SXWt43x6KHGELkjRug8WxL64hsGVzQ6V22zsbJJ4': {'symbol': 'Token2', 'decimals': 6},
-    '9T9KMMKiCTY5TPY164NM3VrS9dvfa4Tuq1nWJK9vF91z': {'symbol': ' Expo LP eUSX','decimals': 6}
+    '3ThdFZQKM6kRyVGLG48kaPg5TRMhYMKY1iCRa9xop1WC': {'symbol': 'eUSX',   'decimals': 6},
+    'Gszr7sJvBMpT88LzbFAkaaEJXxTbULJxQkYQKYVi9uDi': {'symbol': ' Expo LP eUSX','decimals': 6}
 
 
 

@@ -4,7 +4,8 @@ WITH base AS (
     pool_symbol,
     pool_address,
     pool_type,
-    lp_amount,
+    amount_x,
+    amount_y,
     DATE(start_timestamp_ntz) AS start_date,
     DATE(end_timestamp_ntz)   AS end_date,
     COALESCE(DATE(end_timestamp_ntz), CURRENT_DATE()) AS end_date_c
@@ -18,7 +19,7 @@ first_lp_date AS (
     pool_type,
     MIN(start_date) AS first_date
   FROM base
-  WHERE lp_amount > 0
+  WHERE amount_x > 0 OR amount_y > 0
   GROUP BY 1, 2, 3
 ),
 
@@ -56,9 +57,9 @@ daily_lp AS (
     c.user,
     c.pool_type,
     c.pool_symbol,
-    --MAX(b.amount_x)  AS amount_x,
-    --MAX(b.amount_y)  AS amount_y
-    MAX(b.lp_amount) AS lp_amount
+    MAX(b.amount_x)  AS amount_x,
+    MAX(b.amount_y)  AS amount_y
+    --MAX(b.lp_amount) AS lp_amount
   FROM calendar_user_pool c
   LEFT JOIN base b
     ON b.user = c.user
@@ -68,12 +69,12 @@ daily_lp AS (
 )
 
 SELECT
-  date,
+ date,
   user,
   pool_type,
   pool_symbol,
-  --COALESCE(amount_x, 0)  AS amount_x,
-  --COALESCE(amount_y, 0)  AS amount_y
-  COALESCE(lp_amount, 0) AS lp_amount
+  COALESCE(amount_x, 0)  AS amount_x,
+  COALESCE(amount_y, 0)  AS amount_y
+  --COALESCE(lp_amount, 0) AS lp_amount
 FROM daily_lp
 ORDER BY date, user, pool_symbol
