@@ -10,8 +10,8 @@ WITH pools AS (
       (amount_x + amount_y)            AS total_liquidity
   FROM {{ ref('int_daily_clmm') }}
 
-  UNION ALL
-
+  -- CPMM
+  /*UNION ALL
   SELECT
       date,
       user                           AS user,
@@ -22,6 +22,7 @@ WITH pools AS (
       lp_amount,
       lp_amount                        AS total_liquidity
   FROM {{ ref('int_daily_cpmm') }}
+  */
 ),
 
 with_protocol AS (
