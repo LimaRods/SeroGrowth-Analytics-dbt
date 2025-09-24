@@ -57,15 +57,16 @@ daily_lp AS (
     c.user,
     c.pool_type,
     c.pool_symbol,
-    MAX(b.amount_x)  AS amount_x,
-    MAX(b.amount_y)  AS amount_y
+    b.amount_x,
+    b.amount_y
     --MAX(b.lp_amount) AS lp_amount
   FROM calendar_user_pool c
   LEFT JOIN base b
     ON b.user = c.user
    AND b.pool_symbol = c.pool_symbol
    AND c.date BETWEEN b.start_date AND b.end_date_c
-  GROUP BY 1, 2, 3, 4
+ QUALIFY ROW_NUMBER() OVER (PARTITION BY c.date, c.user, c.pool_type,c.pool_symbol ORDER BY b.start_date DESC) = 1
+ 
 )
 
 SELECT
