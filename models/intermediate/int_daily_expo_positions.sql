@@ -61,14 +61,14 @@ daily_positions AS (
     c.user,
     c.symbol,
     c.market,
-    MAX(b.amount) AS position_amount
+    b.amount AS position_amount
   FROM calendar_user_symbol_market c
   LEFT JOIN base b
     ON b.user   = c.user
    AND b.symbol = c.symbol
    AND b.market = c.market
    AND c.date BETWEEN b.start_date AND b.end_date_c
-  GROUP BY 1,2,3,4
+  QUALIFY ROW_NUMBER() OVER (PARTITION BY c.date, c.user, c.symbol, c.market ORDER BY b.start_date DESC) = 1
 )
 
 SELECT
