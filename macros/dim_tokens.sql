@@ -28,7 +28,7 @@
         NULL
       {% endif %}
   {% endfor %}
-    ELSE {{ "'UNKNOWN'" if field == 'symbol' else 'NULL' }}
+    ELSE {{ 'NULL' if field == 'symbol' else 'NULL' }}
   END
 {% endmacro %}
 
