@@ -47,7 +47,7 @@ SELECT
         WHEN qc.type = 'SWAP' 
         THEN qc.awarded_points
 
-        ELSE 0
+        ELSE qc.awarded_points
     END AS base_points,
     q.multiplier_reward,
     q.category AS quest_category
