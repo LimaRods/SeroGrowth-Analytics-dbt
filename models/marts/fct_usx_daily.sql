@@ -2,12 +2,12 @@ WITH usx_vault_events as (
     select
         DATE_TRUNC('day', timestamp_ntz) AS date,
         symbol,
-        sum(case when type = 'CONFIRM_MINT' then amount else 0 end) as daily_mints,
-        sum(case when type = 'CONFIRM_REDEEM' then amount else 0 end) as daily_redeems,
+        sum(case when type = 'MINT' then amount else 0 end) as daily_mints,
+        sum(case when type = 'REDEEM' then amount else 0 end) as daily_redeems,
         sum(
             CASE
-                WHEN type = 'CONFIRM_MINT' then amount 
-                WHEN type = 'CONFIRM_REDEEM' then -amount 
+                WHEN type = 'MINT' then amount 
+                WHEN type = 'REDEEM' then -amount 
             ELSE 0 
         END
         ) as daily_netflow
