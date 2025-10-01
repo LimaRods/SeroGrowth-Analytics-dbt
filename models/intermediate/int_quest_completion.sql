@@ -19,6 +19,8 @@ SELECT
     --q.reward_amount,
     -- Base points logic
         CASE
+        -- General override: if duration < 0.5 days (43,200,000 ms)
+        WHEN qc.duration < 43200000 THEN qc.awarded_points
         -- Hold quests (balance in USX/eUSX)
         WHEN qc.type = 'HOLD'
              AND qc.symbol IN ('USX', 'eUSX') 
