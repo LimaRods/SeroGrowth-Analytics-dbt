@@ -12,5 +12,4 @@ SELECT
     type
 FROM
     {{ source('internal', 'usx_vault') }}
-WHERE
-    timestamp_ntz >= TO_TIMESTAMP_NTZ('2025-09-30')
+
