@@ -31,4 +31,7 @@ SELECT
     tick_upper_index,
     market
 
-FROM {{ source("internal","quest_completions") }}
+FROM 
+    {{ source("internal","quest_completions") }}
+WHERE
+     completed_at_ntz > TO_TIMESTAMP('2025-09-29')
