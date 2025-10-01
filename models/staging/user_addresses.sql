@@ -1,4 +1,4 @@
 SELECT
     *
 FROM
-{{ source("internal","user_addresses")}}
+    {{ source("internal","user_addresses")}}
