@@ -9,3 +9,6 @@ SELECT
     type,
 FROM
     {{ source("internal","yield_vault") }}
+WHERE
+    timestamp_ntz > TO_TIMESTAMP('2025-09-29')
+
