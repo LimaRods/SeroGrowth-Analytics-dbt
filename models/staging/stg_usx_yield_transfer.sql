@@ -11,4 +11,4 @@ SELECT
 FROM
      {{ source("internal","usx_yield_transfer") }}
  WHERE
-    timestamp_ntz > TO_TIMESTAMP('2025-09-29')
+    timestamp_ntz >= TO_TIMESTAMP_NTZ('2025-09-30')
