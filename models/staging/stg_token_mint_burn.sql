@@ -9,5 +9,4 @@ SELECT
     type
 FROM
     {{ source('internal', 'token_mint_burn') }}
-WHERE
-    timestamp_ntz >= TO_TIMESTAMP_NTZ('2025-09-30')
+
