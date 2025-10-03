@@ -2,12 +2,12 @@ WITH usx_vault_events as (
     select
         DATE_TRUNC('day', timestamp_ntz) AS date,
         symbol,
-        sum(case when type = 'MINT' then amount else 0 end) as daily_mints,
-        sum(case when type = 'REDEEM' then amount else 0 end) as daily_redeems,
+        sum(case when type = 'CONFIRM_MINT' then amount else 0 end) as daily_mints,
+        sum(case when type = 'CONFIRM_REDEEM' then amount else 0 end) as daily_redeems,
         sum(
             CASE
-                WHEN type = 'MINT' then amount 
-                WHEN type = 'REDEEM' then -amount 
+                WHEN type = 'CONFIRM_MINT' then amount 
+                WHEN type = 'CONFIRM_REDEEM' then -amount 
             ELSE 0 
         END
         ) as daily_netflow
@@ -15,28 +15,11 @@ WITH usx_vault_events as (
     group by 1,2
 ),
 
--- It doesn't mint or burn  USX
-vault_operation_events AS (
-    SELECT
-        DATE_TRUNC('day', timestamp_ntz) AS date,
-        symbol,
-        sum(CASE WHEN type = 'TRANSFER_IN_COLLATERAL' THEN amount else 0 end) as daily_mints,
-        sum(CASE WHEN type = 'WITHDRAW_FROM_STABLE_DEPOSITORY' THEN amount else 0 end) as daily_redeems,
-        sum(
-            CASE
-                WHEN type = 'TRANSFER_IN_COLLATERAL' then amount 
-                WHEN type = 'WITHDRAW_FROM_STABLE_DEPOSITORY' then -amount 
-            ELSE 0 
-        END
-        ) as daily_netflow
-    FROM {{ ref('stg_usx_vault') }}
-    GROUP BY 1, 2
-),
 
 base AS (
     SELECT * FROM usx_vault_events
-    UNION ALL
-    SELECT * FROM vault_operation_events
+    --UNION ALL
+    --SELECT * FROM vault_operation_events
 ),
 
 aggregated AS (

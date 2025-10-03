@@ -3,19 +3,12 @@ SELECT
     signature,
     protocol,
     venue,
-    user,
+    user_shares AS user,
     symbol,
     amount,
     type
 
 FROM (
-    SELECT 
-    *,
-    'USX Vault' AS venue,
-    'Solstice' AS protocol,
-    FROM
-        {{ ref("stg_usx_mint_redeem")}}
-    UNION ALL
 
     SELECT 
     *,
