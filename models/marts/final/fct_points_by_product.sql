@@ -1,7 +1,4 @@
-SELECT
-    *
-FROM (
-
+WITH points AS (
     SELECT
         date,
         user,
@@ -18,9 +15,7 @@ FROM (
         overall_mult,
         total_points AS overall_points,
         holding_streak_days
-
-    FROM
-        {{  ref('fct_token_bal_points')}}
+    FROM {{ ref('fct_token_bal_points')}}
 
     UNION ALL
 
@@ -40,9 +35,7 @@ FROM (
         overall_mult,
         total_points AS overall_points,
         holding_streak_days
-
-    FROM
-        {{  ref('fct_lp_points')}}
+    FROM {{ ref('fct_lp_points')}}
 
     UNION ALL
 
@@ -62,12 +55,34 @@ FROM (
         overall_mult,
         total_points AS overall_points,
         holding_streak_days
+    FROM {{ ref('fct_expo_positions_points')}}
+),
 
-    FROM
-        {{  ref('fct_expo_positions_points')}}
+referrals AS (
+    SELECT
+       referral.id,
+       referral.created_at,
+       referral.referral_code,
+       referred.address AS referred_address,
+       referral.referred_user_id,
+       referrer.address AS referrer_address,
+       referral.referrer_user_id
+    FROM {{ ref('stg_referrals') }} referral
+    LEFT JOIN {{ ref('user_addresses') }} referred
+        ON referral.referred_user_id = referred.user_id 
+    LEFT JOIN {{ ref('user_addresses') }} referrer
+        ON referral.referrer_user_id = referrer.user_id 
 )
 
-ORDER BY date, product_symbol, overall_points DESC
-
-
-
+SELECT
+    p.*,
+    r.referral_code,
+    CASE 
+        WHEN r.referral_code IS NOT NULL THEN 1 
+        ELSE 0 
+    END AS referral_activated
+FROM points p
+LEFT JOIN referrals r
+    ON p.user = r.referred_address
+   AND p.date >= DATE(r.created_at)
+ORDER BY p.date, p.product_symbol, p.overall_points DESC

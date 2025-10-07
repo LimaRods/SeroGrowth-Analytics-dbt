@@ -6,7 +6,7 @@ sources:
     schema: internal
     config: 
       freshness: # default freshness
-        warn_after: {count: 15, period: minute}
+        warn_after: {count: 90, period: minute}
         error_after: {count: 24, period: hour}
       loaded_at_field: ingested_at # changed to config in v1.10
 
@@ -106,7 +106,14 @@ sources:
           - name: id
             data_tests:
             - unique
-            - not_null             
+            - not_null 
+
+      - name: pending_referral_rewards
+        columns:
+          - name: id
+            data_tests:
+            - unique
+            - not_null                    
 
         
 
