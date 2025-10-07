@@ -1,22 +1,32 @@
-SELECT
-    timestamp_ntz,
-    signature,
-    protocol,
-    venue,
-    user,
-    user_shares,
-    symbol,
-    amount,
-    type
-
-FROM (
-
+WITH base AS (
     SELECT 
-    *,
-    'Yield Vault (eUSX)' AS venue,
-    'Solstice' AS protocol,
-    FROM
-        {{ ref("stg_yield_vault")}}
+        timestamp_ntz,
+        signature,
+        'Solstice' AS protocol,
+        'Yield Vault (eUSX)' AS venue,
+        user,
+        user_shares,
+        symbol,
+        amount,
+        type
+    FROM {{ ref("stg_yield_vault")}}
+),
+
+referrals AS (
+     SELECT
+    *
+    FROM {{ ref('int_referrals') }}
 )
 
-ORDER BY timestamp_ntz DESC
+SELECT
+    b.*,
+    r.referral_code,
+    CASE 
+        WHEN r.referral_code IS NOT NULL THEN 1
+        ELSE 0
+    END AS referral_activated
+FROM base b
+LEFT JOIN referrals r
+    ON b.user = r.referred_address
+   AND b.timestamp_ntz >= r.created_at
+ORDER BY b.timestamp_ntz DESC
