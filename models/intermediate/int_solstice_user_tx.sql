@@ -3,7 +3,8 @@ SELECT
     signature,
     protocol,
     venue,
-    user_shares AS user,
+    user
+    user_shares,
     symbol,
     amount,
     type
