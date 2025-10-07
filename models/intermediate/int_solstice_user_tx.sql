@@ -3,7 +3,7 @@ SELECT
     signature,
     protocol,
     venue,
-    user
+    user,
     user_shares,
     symbol,
     amount,
