@@ -75,4 +75,7 @@ FROM points p
 LEFT JOIN referrals r
     ON p.user = r.referred_address
    AND p.date >= DATE(r.created_at)
+WHERE
+    total_liquidity > 0
+    AND total_liquidity IS NOT NULL
 ORDER BY p.date, p.product_symbol, p.overall_points DESC
