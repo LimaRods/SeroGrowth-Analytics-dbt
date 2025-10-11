@@ -1,6 +1,5 @@
 {{ config(materialized='view') }}
 
-
 WITH quest_completions AS (
     SELECT *
     FROM {{ ref("stg_quest_completions") }}
@@ -11,92 +10,90 @@ quests AS (
     FROM {{ ref("stg_quests") }}
 ),
 
--- only multiplier quests
+-- 1️⃣ Filter only multiplier quests
 multiplier_quests AS (
     SELECT *
     FROM quests
     WHERE reward_type = 'multiplier'
 ),
 
--- 2️ join completions with quests using source rules
-joined AS (
+-- 2️⃣ Split logic by source type
+-- A. Direct match for EUSX / USX / KAMINO
+direct_match AS (
     SELECT
-        qc.id,
-        qc.user_id,
-        qc.type,
-        qc.source,
-        qc.quest_id,
-        qc.completed_at,
-        qc.token,
-        qc.symbol,
-        qc.token_amount,
-        qc.pool_symbol,
-        qc.symbol_x,
-        qc.amount_x,
-        qc.symbol_y,
-        qc.amount_y,
-        qc.awarded_points,
-        qc.pool,
-        qc.pool_type,
-
+        qc.*,
         q.category,
         q.reward_type,
         q.reward_token,
         q.reward_amount,
         q.multiplier_reward,
         q.amount_type,
-
-        -- trace which logic was used to join
-        CASE
-            WHEN qc.source IN ('EUSX', 'USX', 'KAMINO') THEN 'quest_id'
-            WHEN qc.source IN ('ORCA', 'RAYDIUM') THEN 'pool_match'
-            ELSE 'none'
-        END AS multiplier_source_flag,
-
-        -- assign multiplier correctly per context
-        CASE
-            WHEN qc.source IN ('ORCA', 'RAYDIUM') THEN
-                CASE
-                    WHEN q.amount_type = 'X' THEN q.multiplier_reward
-                    WHEN q.amount_type = 'Y' THEN q.multiplier_reward
-                    ELSE NULL
-                END
-            WHEN qc.source IN ('EUSX', 'USX', 'KAMINO') THEN q.multiplier_reward
-            ELSE NULL
-        END AS merged_multiplier
-
+        q.source AS quest_source
     FROM quest_completions qc
     LEFT JOIN multiplier_quests q
-        ON (
-            (
-                qc.source IN ('EUSX','USX','KAMINO')
-                AND qc.quest_id = q.id
-            )
-            OR (
-                qc.source IN ('ORCA','RAYDIUM')
-                AND qc.source = q.source
-                AND qc.type = q.type
-                AND qc.pool = q.pool
-            )
-        )
+        ON qc.quest_id = q.id
+    WHERE qc.source IN ('EUSX','USX','KAMINO')
 ),
 
--- 3️⃣ compute base points only (no multiplier math yet)
+-- B. Pool match for ORCA / RAYDIUM
+pool_match AS (
+    SELECT
+        qc.*,
+        q.category,
+        q.reward_type,
+        q.reward_token,
+        q.reward_amount,
+        q.multiplier_reward,
+        q.amount_type,
+        q.source AS quest_source
+    FROM quest_completions qc
+    LEFT JOIN multiplier_quests q
+        ON qc.source = q.source
+        AND qc.type = q.type
+        AND qc.pool = q.pool
+    WHERE qc.source IN ('ORCA','RAYDIUM')
+),
+
+-- C. Non-multiplier quests (token rewards)
+token_quests AS (
+    SELECT
+        qc.*,
+        NULL AS category,
+        'token' AS reward_type,
+        NULL AS reward_token,
+        NULL AS reward_amount,
+        NULL AS multiplier_reward,
+        NULL AS amount_type,
+        NULL AS quest_source
+    FROM quest_completions qc
+    WHERE qc.source NOT IN ('EUSX','USX','KAMINO','ORCA','RAYDIUM')
+),
+
+-- Combine all sources, no duplicates
+joined AS (
+    SELECT * FROM direct_match
+    UNION ALL
+    SELECT * FROM pool_match
+    UNION ALL
+    SELECT * FROM token_quests
+),
+
+-- 3️⃣ Compute base_points & multiplier fields (no effective calc yet)
 calc_points AS (
     SELECT
         j.*,
 
         CASE
-            -- token-based quests → base = awarded
+            -- 🪙 token-based quests → base = awarded
             WHEN j.reward_type = 'token'
             THEN j.awarded_points
 
-            -- multiplier quests for EUSX/USX/KAMINO → base = token_amount
+            -- 💠 multiplier quests for EUSX/USX/KAMINO → base = token_amount
             WHEN j.reward_type = 'multiplier'
                  AND j.source IN ('EUSX','USX','KAMINO')
             THEN j.token_amount
 
-            -- multiplier quests for ORCA/RAYDIUM → base = amount_x + amount_y
+            -- 🌊 multiplier quests for ORCA/RAYDIUM → base = amount_x + amount_y
             WHEN j.reward_type = 'multiplier'
                  AND j.source IN ('ORCA','RAYDIUM')
             THEN COALESCE(j.amount_x,0) + COALESCE(j.amount_y,0)
@@ -104,7 +101,11 @@ calc_points AS (
             ELSE j.awarded_points
         END AS base_points,
 
-        -- separate multiplier columns for ORCA/RAYDIUM
+        -- 🎚️ multipliers
+        CASE
+            WHEN j.source IN ('EUSX','USX','KAMINO') THEN j.multiplier_reward
+        END AS multiplier,
+
         CASE
             WHEN j.source IN ('ORCA','RAYDIUM') AND j.amount_type = 'X' THEN j.multiplier_reward
         END AS multiplier_x,
@@ -135,10 +136,9 @@ SELECT
     token_amount,
     awarded_points,
     base_points,
+    multiplier,
     multiplier_x,
     multiplier_y,
-    merged_multiplier AS multiplier_applied,
-    multiplier_source_flag,
     reward_type,
     reward_token,
     reward_amount
