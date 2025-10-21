@@ -33,5 +33,5 @@ SELECT
 
 FROM 
     {{ source("internal","quest_completions") }}
-WHERE
-    completed_at_ntz >= TO_TIMESTAMP_NTZ('2025-09-30')
+--WHERE
+    --completed_at_ntz >= TO_TIMESTAMP_NTZ('2025-09-30')
