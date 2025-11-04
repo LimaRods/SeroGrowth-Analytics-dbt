@@ -36,7 +36,7 @@ direct_match AS (
     FROM quest_completions qc
     INNER JOIN multiplier_quests q
         ON qc.quest_id = q.id
-    WHERE qc.source IN ('EUSX','USX','KAMINO')
+    WHERE qc.source IN ('EUSX','USX','KAMINO', 'EXPONENT')
 ),
 
 -- B. Dual join for ORCA / RAYDIUM (amount_type X & Y)
