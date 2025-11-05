@@ -9,14 +9,6 @@ SELECT
 FROM (
     SELECT 
     *,
-    'USX Vault' AS venue,
-    'Solstice' AS protocol,
-    FROM
-        {{ ref("usx_vault_wallet")}}
-    UNION ALL
-
-    SELECT 
-    *,
     'Yield Vault (eUSX)' AS venue,
     'Solstice' AS protocol,
     FROM
