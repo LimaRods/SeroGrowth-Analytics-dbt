@@ -9,20 +9,6 @@ WITH pools AS (
       NULL::float                      AS lp_amount,
       (amount_x + amount_y)            AS total_liquidity
   FROM {{ ref('int_daily_clmm') }}
-
-  -- CPMM
-  /*UNION ALL
-  SELECT
-      date,
-      user                           AS user,
-      pool_type,
-      pool_symbol,
-      NULL::float                      AS amount_x,
-      NULL::float                      AS amount_y,
-      lp_amount,
-      lp_amount                        AS total_liquidity
-  FROM {{ ref('int_daily_cpmm') }}
-  */
 ),
 
 with_protocol AS (
