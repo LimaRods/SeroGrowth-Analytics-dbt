@@ -6,7 +6,7 @@ sources:
     schema: internal
     config: 
       freshness: # default freshness
-        warn_after: {count: 90, period: minute}
+        warn_after: {count: 2, period: hour}
         error_after: {count: 24, period: hour}
       loaded_at_field: ingested_at # changed to config in v1.10
 
@@ -66,13 +66,6 @@ sources:
               - unique
               - not_null
 
-      - name: liquidity_cpmm
-        columns:
-          - name: id
-            data_tests:
-            - unique
-            - not_null
-
       - name: quest_completions
         columns:
           - name: id
@@ -113,7 +106,15 @@ sources:
           - name: id
             data_tests:
             - unique
-            - not_null                    
+            - not_null
+
+      - name: exponent_messages
+        columns:
+          - name: id
+            data_tests:
+            - unique
+            - not_null
+
 
         
 
