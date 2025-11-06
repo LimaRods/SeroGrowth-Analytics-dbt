@@ -3,7 +3,7 @@ SELECT
     address AS user,
     market,
     CASE
-        WHEN market = 'GhjqLUcaCrfH9s6bM5H9GvbWoDTYGsdXxVubP8J57cUr' THEN 'eUSX - Exponent Vault'
+        WHEN market = 'GhjqLUcaCrfH9s6bM5H9GvbWoDTYGsdXxVubP8J57cUr' THEN 'Exponent LP'
     END AS symbol,
     CASE
         WHEN market = 'GhjqLUcaCrfH9s6bM5H9GvbWoDTYGsdXxVubP8J57cUr' THEN amount_raw/POW(10,6)
