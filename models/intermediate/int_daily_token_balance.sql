@@ -10,7 +10,6 @@ WITH base AS (
     COALESCE(DATE(end_ts), CURRENT_DATE()) AS end_date_c  -- inclusive end
   FROM {{ ref('stg_token_balances') }}
   -- Optional whitelist (keep if desired)
-  -- WHERE symbol IN ('USX','eUSX')
 ),
 
 first_hold AS (

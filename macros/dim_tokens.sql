@@ -6,7 +6,8 @@
     'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': {'symbol': 'USDC',  'decimals': 6},
     '6FrrzDk5mQARGc1TDYoyVnSyRdds1t4PbtohCD6p3tgG': {'symbol': 'USX',   'decimals': 6},
     '3ThdFZQKM6kRyVGLG48kaPg5TRMhYMKY1iCRa9xop1WC': {'symbol': 'eUSX',   'decimals': 6},
-    'Gszr7sJvBMpT88LzbFAkaaEJXxTbULJxQkYQKYVi9uDi': {'symbol': ' Expo LP eUSX','decimals': 6}
+    'Gz6LTebmfQqjbQD4C5NzqFN6PVWRd9pG3BJ4p4xHeDxF': {'symbol': ' Expo LP eUSX','decimals': 6},
+    'DDoYyEUcdkHV5a4NCPXDRL9f93NgPbqK9ZANAGL627wF': {'symbol': 'YT-eUSX', 'decimals': 7}
 
 
 
