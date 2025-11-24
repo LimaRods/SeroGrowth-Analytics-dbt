@@ -9,4 +9,10 @@ SELECT
 
 FROM
     {{ source('internal','token_balances')}}
-WHERE  token IN ('6FrrzDk5mQARGc1TDYoyVnSyRdds1t4PbtohCD6p3tgG','3ThdFZQKM6kRyVGLG48kaPg5TRMhYMKY1iCRa9xop1WC','DDoYyEUcdkHV5a4NCPXDRL9f93NgPbqK9ZANAGL627wF', 'Gz6LTebmfQqjbQD4C5NzqFN6PVWRd9pG3BJ4p4xHeDxF') -- USX, eUSX, YT AND ELP
+WHERE  token IN ('6FrrzDk5mQARGc1TDYoyVnSyRdds1t4PbtohCD6p3tgG',
+                '3ThdFZQKM6kRyVGLG48kaPg5TRMhYMKY1iCRa9xop1WC',
+                'DDoYyEUcdkHV5a4NCPXDRL9f93NgPbqK9ZANAGL627wF',
+                'Gz6LTebmfQqjbQD4C5NzqFN6PVWRd9pG3BJ4p4xHeDxF',
+                '6K6bDA3f2heMYZQzbu3GDzx73zEXCeWZ58msfc1kDA6n',
+                'HQmMS5W34VcMtR85akhZgvypy7iqVWRXi282vwdf9eTX'
+                ) -- USX, eUSX, YT AND ELP
