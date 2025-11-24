@@ -8,7 +8,9 @@ SELECT
     type,
     mint_yt,
     mint_lp,
-    amount_raw/POW(10,6) AS amount,
+    {{ token_symbol('mint_yt') }} AS yt_symbol,
+    {{ token_symbol('mint_lp') }} AS lp_symbol,
+    {{ token_amount_adj('amount_raw','mint_lp') }} AS amount,
     market
 
 FROM
