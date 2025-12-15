@@ -1,4 +1,4 @@
-{{ config(materialized='view') }}
+
 
 -- IMPORTANT (run once per session if needed)
 -- ALTER SESSION SET MAX_RECURSION_DEPTH = 10000;
