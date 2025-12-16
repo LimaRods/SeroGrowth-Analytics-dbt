@@ -32,7 +32,7 @@ date_bounds AS (
 
 ),
 
-all_dates AS (
+all_dates AS ( 
 SELECT
     date_day AS date
 FROM
