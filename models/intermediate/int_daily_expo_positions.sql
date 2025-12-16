@@ -1,4 +1,5 @@
--- One row per "streak": position amount applies from start_ts until end_ts (or ongoing)
+WITH base AS (
+  -- One row per "streak": position amount applies from start_ts until end_ts (or ongoing)
   SELECT
     user,
     symbol,
@@ -33,14 +34,10 @@ date_bounds AS (
 ),
 
 all_dates AS (
-  -- Generate enough rows and trim to the bounds
-  SELECT DATEADD(day, n, db.min_date) AS date
-  FROM date_bounds db
-  JOIN LATERAL (
-    SELECT SEQ4() AS n
-    FROM TABLE(GENERATOR(ROWCOUNT => 20000))   -- ~54 years; adjust upward if needed
-  ) g
-  WHERE DATEADD(day, n, db.min_date) <= db.max_date
+  SELECT
+    date_day AS date
+FROM
+    {{ ref('dim_date')}}
 ),
 
 calendar_user_symbol_market AS (
@@ -81,3 +78,5 @@ SELECT
   market,
   COALESCE(position_amount, 0) AS position_amount
 FROM daily_positions
+
+ORDER BY date, user, symbol, market

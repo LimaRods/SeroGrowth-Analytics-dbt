@@ -33,14 +33,10 @@ date_bounds AS (
 ),
 
 all_dates AS (
-  -- Generate enough rows and trim to the bounds (constant ROWCOUNT for Snowflake)
-  SELECT DATEADD(day, n, db.min_date) AS date
-  FROM date_bounds db
-  JOIN LATERAL (
-    SELECT SEQ4() AS n
-    FROM TABLE(GENERATOR(ROWCOUNT => 20000))   -- ~54 years; raise if needed
-  ) g
-  WHERE DATEADD(day, n, db.min_date) <= db.max_date
+SELECT
+    date_day AS date
+FROM
+    {{ ref('dim_date')}}
 ),
 
 
