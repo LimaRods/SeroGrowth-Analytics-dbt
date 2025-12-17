@@ -2,7 +2,7 @@ with
     base as (
         select date, user, symbol, coalesce(token_balance, 0) as token_balance
         from {{ ref("int_daily_token_balance") }}
-        WHERE symbol IN ('USX','eUSX')
+        --WHERE symbol IN ('USX','eUSX')
     ),
 
     -- 1) Flag whether the user is holding on that day
