@@ -1,5 +1,3 @@
-
-
 WITH registered_users AS (
     SELECT address
     FROM {{ ref('user_addresses') }}
@@ -10,6 +8,7 @@ blacklisted_users AS (
     FROM {{ ref('blacklisted_addresses') }}
 ),
 
+/* 1️⃣ Normalize raw CLMM balance streaks (timestamp-safe) */
 base AS (
     SELECT
         user,
@@ -20,13 +19,14 @@ base AS (
         amount_x,
         symbol_y,
         amount_y,
-        DATE(start_timestamp_ntz) AS start_date,
 
-        -- open streaks capped at yesterday
+        start_timestamp_ntz AS start_ts,
+
+        /* cap open streaks at yesterday 23:59:59 */
         LEAST(
-            DATE(COALESCE(end_timestamp_ntz, CURRENT_DATE())),
-            DATEADD(day, -1, CURRENT_DATE())
-        ) AS end_date
+            COALESCE(end_timestamp_ntz, DATEADD(second, -1, CURRENT_TIMESTAMP())),
+            DATEADD(second, -1, DATEADD(day, 1, CURRENT_DATE()))
+        ) AS end_ts
     FROM {{ ref('stg_liquidity_clmm') }}
     WHERE (amount_x > 0 OR amount_y > 0)
       AND pool_address IN (
@@ -37,6 +37,7 @@ base AS (
         )
 ),
 
+/* 2️⃣ Exclude registered & blacklisted users */
 eligible AS (
     SELECT b.*
     FROM base b
@@ -46,26 +47,24 @@ eligible AS (
         ON b.user = bl.address
     WHERE r.address IS NULL
       AND bl.address IS NULL
-      AND b.start_date <= b.end_date
+      AND b.start_ts < b.end_ts
 ),
 
-/* 
-   KEY STEP:
-   Convert overlapping LP balance streaks into effective windows.
-   Older streak ends the day before the next newer streak starts.
-*/
+/* 3️⃣ Resolve overlapping LP streaks
+      (newer streak overrides older ones) */
 windowed AS (
     SELECT
         e.*,
-        LEAD(e.start_date) OVER (
+        LEAD(e.start_ts) OVER (
             PARTITION BY
                 e.user,
                 e.pool_address
-            ORDER BY e.start_date
-        ) AS next_start_date
+            ORDER BY e.start_ts
+        ) AS next_start_ts
     FROM eligible e
 ),
 
+/* 4️⃣ Compute effective non-overlapping windows */
 effective AS (
     SELECT
         user,
@@ -76,25 +75,37 @@ effective AS (
         amount_x,
         symbol_y,
         amount_y,
-        start_date,
+        start_ts,
 
         LEAST(
-            end_date,
-            COALESCE(DATEADD(day, -1, next_start_date), end_date)
-        ) AS effective_end_date
+            end_ts,
+            COALESCE(DATEADD(second, -1, next_start_ts), end_ts)
+        ) AS effective_end_ts
     FROM windowed
 ),
 
+/* 5️⃣ FULL DAYS ONLY (Solstice rule) */
 final AS (
     SELECT
-        *,
-        /* inclusive duration */
-        DATEDIFF(day, start_date, effective_end_date) + 1 AS days_held
+        user,
+        pool_address,
+        pool_symbol,
+        pool_type,
+        symbol_x,
+        amount_x,
+        symbol_y,
+        amount_y,
+        start_ts,
+        effective_end_ts,
+
+        FLOOR(
+            DATEDIFF(second, start_ts, effective_end_ts) / 86400
+        ) AS days_held
     FROM effective
-    WHERE effective_end_date >= start_date
+    WHERE effective_end_ts > start_ts
 )
 
--- Final output (ready for flares)
+-- 🎯 Final output (ready for incentive calculation)
 SELECT
     user,
     pool_address,
@@ -104,8 +115,8 @@ SELECT
     amount_x,
     symbol_y,
     amount_y,
-    start_date,
-    effective_end_date AS end_date,
+    start_ts,
+    effective_end_ts AS end_ts,
     days_held,
 
     (
@@ -114,4 +125,5 @@ SELECT
     ) * days_held AS flares
 
 FROM final
-ORDER BY start_date, user, pool_address
+WHERE days_held >= 1
+ORDER BY start_ts, user, pool_address

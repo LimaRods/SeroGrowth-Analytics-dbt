@@ -8,7 +8,7 @@ blacklisted_users AS (
     FROM {{ ref('blacklisted_addresses') }}
 ),
 
-/* 1) Base streaks (already humanized in STG) */
+/* 1️⃣ Normalize raw Exponent streaks */
 base AS (
     SELECT
         user,
@@ -16,19 +16,18 @@ base AS (
         token_mint_address,
         symbol,
         amount,
+        start_timestamp_ntz AS start_ts,
 
-        DATE(start_timestamp_ntz) AS start_date,
-
-        -- cap open streaks at yesterday (no points for today)
+        /* cap open streaks at end of yesterday (23:59:59) */
         LEAST(
-            DATE(COALESCE(end_timestamp_ntz, CURRENT_DATE())),
-            DATEADD(day, -1, CURRENT_DATE())
-        ) AS end_date
+            COALESCE(end_timestamp_ntz, DATEADD(second, -1, CURRENT_TIMESTAMP())),
+            DATEADD(second, -1, DATEADD(day, 1, CURRENT_DATE()))
+        ) AS end_ts
     FROM {{ ref('stg_liquidity_expo') }}
     WHERE amount > 0
 ),
 
-/* 2) Exclude registered + blacklisted users */
+/* 2️⃣ Exclude registered & blacklisted users */
 eligible AS (
     SELECT b.*
     FROM base b
@@ -38,25 +37,25 @@ eligible AS (
         ON b.user = bl.address
     WHERE r.address IS NULL
       AND bl.address IS NULL
-      AND b.start_date <= b.end_date
+      AND b.start_ts < b.end_ts
 ),
 
-/* 3) Convert "threshold streaks" → EFFECTIVE windows
-      A streak is only valid until the day before a newer one starts */
+/* 3️⃣ Resolve overlapping threshold streaks
+   (higher / newer positions override older ones) */
 windowed AS (
     SELECT
         e.*,
-        LEAD(e.start_date) OVER (
+        LEAD(e.start_ts) OVER (
             PARTITION BY
                 e.user,
                 e.market,
                 e.token_mint_address
-            ORDER BY e.start_date
-        ) AS next_start_date
+            ORDER BY e.start_ts
+        ) AS next_start_ts
     FROM eligible e
 ),
 
-/* 4) Final effective date per streak */
+/* 4️⃣ Compute effective non-overlapping windows */
 effective AS (
     SELECT
         user,
@@ -64,22 +63,31 @@ effective AS (
         token_mint_address,
         symbol,
         amount,
-        start_date,
+        start_ts,
 
         LEAST(
-            end_date,
-            COALESCE(DATEADD(day, -1, next_start_date), end_date)
-        ) AS effective_end_date
+            end_ts,
+            COALESCE(DATEADD(second, -1, next_start_ts), end_ts)
+        ) AS effective_end_ts
     FROM windowed
 ),
 
-/* 5) Compute days held (inclusive) */
+/* 5️⃣ FULL DAYS ONLY (Solstice rule) */
 final AS (
     SELECT
-        *,
-        DATEDIFF(day, start_date, effective_end_date) + 1 AS days_held
+        user,
+        market,
+        token_mint_address,
+        symbol,
+        amount,
+        start_ts,
+        effective_end_ts,
+
+        FLOOR(
+            DATEDIFF(second, start_ts, effective_end_ts) / 86400
+        ) AS days_held
     FROM effective
-    WHERE effective_end_date >= start_date
+    WHERE effective_end_ts > start_ts
 )
 
 SELECT
@@ -88,15 +96,14 @@ SELECT
     token_mint_address,
     symbol,
     amount,
-    start_date,
-    effective_end_date AS end_date,
+    start_ts,
+    effective_end_ts AS end_ts,
     days_held,
 
-    /* Flares = TVL × days × multiplier */
     amount
-      * days_held
-      * {{ tvl_multiplier('token_mint_address', 'symbol') }}
-      AS flares
-
+        * days_held
+        * {{ tvl_multiplier('token_mint_address', 'symbol') }}
+        AS flares
 FROM final
-ORDER BY start_date, user, market
+WHERE days_held >= 1
+ORDER BY start_ts, user, token_mint_address
