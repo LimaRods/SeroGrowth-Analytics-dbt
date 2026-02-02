@@ -9,8 +9,17 @@
     '3ThdFZQKM6kRyVGLG48kaPg5TRMhYMKY1iCRa9xop1WC': {'symbol': 'eUSX',   'decimals': 6},
     'Gz6LTebmfQqjbQD4C5NzqFN6PVWRd9pG3BJ4p4xHeDxF': {'symbol': 'ELP-eUSX-11MAR26','decimals': 6},
     'DDoYyEUcdkHV5a4NCPXDRL9f93NgPbqK9ZANAGL627wF': {'symbol': 'YT-eUSX-11MAR26', 'decimals': 6},
+    '6oiDcfve7ybKUC8ysZmncC9iSuxQG2vrRkh3dgV7EKR4': {'symbol': 'PT-eUSX-11MAR26', 'decimals': 6},
     '6K6bDA3f2heMYZQzbu3GDzx73zEXCeWZ58msfc1kDA6n': {'symbol': 'ELP-USX-09FEB26', 'decimals': 6},
-    'HQmMS5W34VcMtR85akhZgvypy7iqVWRXi282vwdf9eTX': {'symbol': 'YT-USX-09FEB26', 'decimals': 6}
+    'HQmMS5W34VcMtR85akhZgvypy7iqVWRXi282vwdf9eTX': {'symbol': 'YT-USX-09FEB26', 'decimals': 6},
+    '7vWj1UriSscGmz5wadAC8EkA8ndoU3M7WUifqxTC3Ysf': {'symbol': 'PT-USX-09FEB26', 'decimals': 6},
+    'BR2JKV9gPoJfX8A8DkFmo2yNQKCeGipg33oYaZ4EmjbW': {'symbol': 'ELP-USX-01JUN26', 'decimals': 6},
+    'Au8g11nXqXrUAmL14GM3gQnrnJnr4dcpgc5DNAnu9F9s': {'symbol': 'YT-USX-01JUN26', 'decimals': 6},
+    '3kctCXgt6pP3uZcek8SqNK2KZdQ6cqtj9hc3U46jhgBk': {'symbol': 'PT-USX-01JUN26', 'decimals': 6},
+    '4GT6g1iKx2TyYCkwt1tERkReQjSUuVE7uh14M5W8v2nn': {'symbol': 'ELP-eUSX-01JUN26', 'decimals': 6},
+    'GEYwnvNzqFXrLnNq4riXbn2ASnwU3cF8RXW6wXKHM4sw': {'symbol': 'YT-eUSX-01JUN26', 'decimals': 6},
+    'BNR2FsHo8JrYGWx2V8yxG5GBWiG3uU8voi2eMGBHFwEj': {'symbol': 'PT-eUSX-01JUN26', 'decimals': 6}
+
 
 
 
