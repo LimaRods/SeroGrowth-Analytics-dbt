@@ -89,5 +89,7 @@ with
         from holding_days
     )
 
-select *, base_points * overall_mult as total_points,
+select
+    *,
+    base_points * overall_mult as total_points
 from points_calculation
