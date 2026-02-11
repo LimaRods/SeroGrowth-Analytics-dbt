@@ -1,3 +1,10 @@
+{{
+    config(
+        materialized = 'view'
+    )
+
+}}
+
 SELECT
    referral.id,
    referral.created_at,

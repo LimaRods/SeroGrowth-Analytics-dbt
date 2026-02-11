@@ -1,3 +1,10 @@
+{{
+    config(
+        materialized = 'view'
+    )
+
+}}
+
 WITH registered_users AS (
     SELECT address
     FROM {{ ref('user_addresses') }}

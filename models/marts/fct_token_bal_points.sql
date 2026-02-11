@@ -1,8 +1,25 @@
+{{
+    config(
+        materialized = 'incremental',
+        unique_key = ['date', 'user', 'protocol', 'symbol'],
+        incremental_strategy='merge'
+    )
+
+}}
+
 with
     base as (
-        select date, user, symbol, coalesce(token_balance, 0) as token_balance
-        from {{ ref("int_daily_token_balance") }}
-        --WHERE symbol IN ('USX','eUSX')
+        select
+            date, user, symbol, coalesce(token_balance, 0) as token_balance
+        from
+            {{ ref("int_daily_token_balance") }}
+        {% if is_incremental() %}
+
+        where
+            date >= (SELECT MAX(date) FROM fct_token_bal_points - INTERVAL) '7 DAY'
+
+        {% endif %}
+
     ),
 
     -- 1) Flag whether the user is holding on that day
@@ -74,4 +91,3 @@ with
 
 select *, base_points * overall_mult as total_points,
 from points_calculation
-order by date, user, symbol

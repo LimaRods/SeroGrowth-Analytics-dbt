@@ -1,3 +1,13 @@
+{{
+    config(
+        materialized = 'incremental',
+        incremental_strategy = 'merge',
+        unique_key = 'signature'
+
+    )
+
+}}
+
 WITH base AS (
     SELECT 
         timestamp_ntz,
@@ -10,6 +20,9 @@ WITH base AS (
         amount,
         type
     FROM {{ ref("stg_yield_vault")}}
+    {% if is_incremental() %}
+        where timestamp_ntz > (SELECT MAX(timestamp_ntz) from int_solstice_user_tx) - INTERVAL '1 DAY'
+    {% endif %}
 ),
 
 referrals AS (
@@ -29,4 +42,3 @@ FROM base b
 LEFT JOIN referrals r
     ON b.user = r.referred_address
    AND b.timestamp_ntz >= r.created_at
-ORDER BY b.timestamp_ntz DESC
