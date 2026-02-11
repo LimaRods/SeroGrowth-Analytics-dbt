@@ -1,3 +1,14 @@
+{{
+    config(
+        materialized = 'incremental',
+        unique_key = ['date', 'symbol'],
+        incremental_strategy = 'merge'
+
+    )
+
+}}
+
+
 with base as (
     select
         date_trunc('day', timestamp_ntz) as date,
@@ -12,6 +23,10 @@ with base as (
         END
         ) as daily_supply
     from {{ ref('stg_token_mint_burn') }}
+    {% if is_incremental() %}
+    where
+       date_trunc('day', timestamp_ntz) >= (SELECT COALESCE(MAX(date_trunc('day', timestamp_ntz)),TO_DATE('1900-01-01')) FROM fct_token_mint_burn) - INTERVAL '1 DAY'
+    {% endif %}
     group by 1,2
 ),
 
@@ -74,4 +89,3 @@ final as (
 
 select *
 from final
-order by date, symbol

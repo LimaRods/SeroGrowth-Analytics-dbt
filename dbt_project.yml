@@ -38,9 +38,9 @@ clean-targets:         # directories to be removed by `dbt clean`
 models:
   sero_analytics:
     +database: solstice_analytics
-  staging:
-    +materialized: view
-  intermediate:
-    +materialized: table
-  marts:
-    +materialized: table
+    staging:
+      +materialized: view
+    intermediate:
+      +materialized: table
+    marts:
+      +materialized: table
