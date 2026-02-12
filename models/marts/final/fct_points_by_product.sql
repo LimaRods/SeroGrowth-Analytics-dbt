@@ -2,11 +2,17 @@
   config(
     materialized = 'incremental',
     incremental_strategy = 'merge',
-    unique_key = ['date', 'user', 'protocol', 'product_symbol']
+    unique_key = ['date', 'user', 'protocol', 'product_symbol', 'product_address']
   )
 }}
 
-WITH points AS (
+WITH watermark AS (
+  SELECT
+    DATEADD(day,-7,COALESCE(MAX(date), TO_DATE('1900-01-01'))) AS min_date
+  FROM {{ this }}
+),
+
+points AS (
 
     -- Token balances snapshot
     SELECT
@@ -15,6 +21,7 @@ WITH points AS (
         protocol,
         symbol,
         symbol AS product_symbol,
+        token_mint_address AS product_address,
         token_balance,
         NULL AS amount_x,
         NULL AS amount_y,
@@ -27,10 +34,7 @@ WITH points AS (
         holding_streak_days
     FROM {{ ref('fct_token_bal_points') }}
     {% if is_incremental() %}
-    WHERE date >= (
-        SELECT COALESCE(MAX(date), TO_DATE('1900-01-01'))
-        FROM fct_points_by_product
-    ) - INTERVAL '7 day'
+    WHERE date >= (SELECT min_date FROM watermark)
     {% endif %}
 
     UNION ALL
@@ -41,7 +45,8 @@ WITH points AS (
         user,
         protocol,
         pool_symbol AS symbol,
-        protocol || ': ' || pool_symbol AS product_symbol,  -- FIX: use pool_symbol
+        protocol || ': ' || pool_symbol AS product_symbol,
+        pool_address AS product_address,
         NULL AS token_balance,
         amount_x,
         amount_y,
@@ -54,10 +59,7 @@ WITH points AS (
         holding_streak_days
     FROM {{ ref('fct_lp_points') }}
     {% if is_incremental() %}
-    WHERE date >= (
-        SELECT COALESCE(MAX(date), TO_DATE('1900-01-01'))
-        FROM {{ this }}
-    ) - INTERVAL '7 day'
+    WHERE date >= (SELECT min_date FROM watermark)
     {% endif %}
 
     UNION ALL
@@ -69,6 +71,7 @@ WITH points AS (
         protocol,
         symbol,
         protocol || ': ' || symbol AS product_symbol,
+        market AS product_address,
         position_amount AS token_balance,
         NULL AS amount_x,
         NULL AS amount_y,
@@ -81,10 +84,7 @@ WITH points AS (
         holding_streak_days
     FROM {{ ref('fct_expo_positions_points') }}
     {% if is_incremental() %}
-    WHERE date >= (
-        SELECT COALESCE(MAX(date), TO_DATE('1900-01-01'))
-        FROM {{ this }}
-    ) - INTERVAL '7 day'
+    WHERE date >= (SELECT min_date FROM watermark)
     {% endif %}
 
 ),
@@ -92,6 +92,7 @@ WITH points AS (
 referrals AS (
     SELECT *
     FROM {{ ref('int_referrals') }}
+    QUALIFY ROW_NUMBER() OVER(PARTITION BY referred_address ORDER BY created_at ASC) = 1
 )
 
 SELECT
@@ -104,6 +105,6 @@ SELECT
 FROM points p
 LEFT JOIN referrals r
     ON p.user = r.referred_address
-   AND p.date >= DATE(r.created_at)
+   AND p.date >= TO_DATE(r.created_at)
 WHERE
     p.total_liquidity > 0

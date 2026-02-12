@@ -1,7 +1,7 @@
 {{
     config(
         materialized = 'incremental',
-        unique_key = ['date', 'user', 'protocol', 'symbol'],
+        unique_key = ['date', 'user', 'protocol', 'symbol', 'token_mint_address'],
         incremental_strategy='merge'
     )
 
@@ -10,13 +10,13 @@
 with
     base as (
         select
-            date, user, symbol, coalesce(token_balance, 0) as token_balance
+            date, user, symbol, token_mint_address, coalesce(token_balance, 0) as token_balance
         from
             {{ ref("int_daily_token_balance") }}
         {% if is_incremental() %}
 
         where
-            date >= (SELECT MAX(date) FROM fct_token_bal_points - INTERVAL) '7 DAY'
+            date >= (SELECT DATEADD(day,-7,COALESCE(MAX(date), TO_DATE('1900-01-01'))) FROM {{ this }})
 
         {% endif %}
 
@@ -34,7 +34,7 @@ with
         select
             *,
             sum(case when is_holding = 0 then 1 else 0 end) over (
-                partition by user, symbol
+                partition by user, symbol, token_mint_address
                 order by date
                 rows between unbounded preceding and current row
             ) as reset_id
@@ -50,11 +50,12 @@ with
             user,
             symbol,
             token_balance,
+             token_mint_address,
             case
                 when is_holding = 1
                 then
                     row_number() over (
-                        partition by user, symbol, reset_id order by date
+                        partition by user, symbol, token_mint_address, reset_id order by date
                     )
                 else 0
             end as holding_streak_days
@@ -68,6 +69,7 @@ with
             'Solstice' as protocol,
             symbol,
             token_balance,
+            token_mint_address,
             {{ base_multiplier("symbol") }} as base_mult,
             token_balance * {{ base_multiplier("symbol") }} as base_points,
             {{ loyalty_multiplier("holding_streak_days") }} as loyalty_mult,

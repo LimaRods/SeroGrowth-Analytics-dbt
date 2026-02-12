@@ -17,10 +17,11 @@ first_hold AS (
   SELECT
     user,
     symbol,
+    token_mint_address,
     MIN(start_date) AS first_date
   FROM base
   WHERE amount > 0
-  GROUP BY 1,2
+  GROUP BY 1,2,3
 ),
 
 date_bounds AS (
@@ -46,7 +47,8 @@ calendar_user_token AS (
   SELECT
     d.date,
     p.user,
-    p.symbol
+    p.symbol,
+    p.token_mint_address
   FROM all_dates d
   CROSS JOIN first_hold p
   WHERE d.date >= p.first_date
@@ -59,13 +61,15 @@ daily_positions AS (
     c.date,
     c.user,
     c.symbol,
+    c.token_mint_address,
     amount AS token_balance
   FROM calendar_user_token c
   LEFT JOIN base b
     ON b.user = c.user
    AND b.symbol = c.symbol
+   AND b.token_mint_address = c.token_mint_address
    AND c.date BETWEEN b.start_date AND b.end_date_c
-  QUALIFY ROW_NUMBER() OVER (PARTITION BY c.date, c.user, c.symbol ORDER BY b.start_date DESC) = 1
+  QUALIFY ROW_NUMBER() OVER (PARTITION BY c.date, c.user, c.symbol, c.token_mint_address ORDER BY b.start_date DESC) = 1
 )
 
 
@@ -73,8 +77,7 @@ SELECT
   date,
   user,
   symbol,
+ token_mint_address,
   COALESCE(token_balance, 0) AS token_balance
 FROM daily_positions
 
-
-ORDER BY date, user, symbol

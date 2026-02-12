@@ -25,7 +25,7 @@ with base as (
     from {{ ref('stg_token_mint_burn') }}
     {% if is_incremental() %}
     where
-       date_trunc('day', timestamp_ntz) >= (SELECT COALESCE(MAX(date_trunc('day', timestamp_ntz)),TO_DATE('1900-01-01')) FROM fct_token_mint_burn) - INTERVAL '1 DAY'
+       date >= (SELECT DATEADD(day,-7,COALESCE(MAX(date), TO_DATE('1900-01-01'))) FROM {{ this }})
     {% endif %}
     group by 1,2
 ),

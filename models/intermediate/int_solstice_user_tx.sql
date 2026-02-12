@@ -21,7 +21,7 @@ WITH base AS (
         type
     FROM {{ ref("stg_yield_vault")}}
     {% if is_incremental() %}
-        where timestamp_ntz > (SELECT MAX(timestamp_ntz) from int_solstice_user_tx) - INTERVAL '1 DAY'
+        where timestamp_ntz >= (SELECT DATEADD(day,-1,COALESCE(MAX(timestamp_ntz), TO_DATE('1900-01-01'))) FROM {{ this }})
     {% endif %}
 ),
 
