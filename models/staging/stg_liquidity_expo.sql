@@ -10,3 +10,5 @@ SELECT
 
 FROM
     {{ source("internal","exponent_liquidity_positions") }}
+WHERE
+    {{ token_symbol('token') }} IS NOT NULL -- Don't pull tokens not identifible 

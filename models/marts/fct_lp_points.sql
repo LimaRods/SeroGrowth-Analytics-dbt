@@ -4,6 +4,7 @@ WITH pools AS (
       user                           AS user,
       pool_type,
       pool_symbol,
+      pool_address,
       amount_x,
       amount_y,
       NULL::float                      AS lp_amount,
@@ -23,6 +24,7 @@ with_protocol AS (
         WHEN pool_type = 'RAYDIUM_CPMM'   THEN 'Raydium'
         ELSE 'Unknown'
       END AS protocol,
+      pool_address,
       pool_symbol,
       amount_x,
       amount_y,
@@ -43,7 +45,7 @@ with_resets AS (
       *,
       SUM(CASE WHEN is_holding = 0 THEN 1 ELSE 0 END)
         OVER (
-          PARTITION BY user, protocol, pool_symbol
+          PARTITION BY user, protocol, pool_symbol, pool_address
           ORDER BY date
           ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
         ) AS reset_id
@@ -57,6 +59,7 @@ holding_days AS (
       protocol,
       pool_type,
       pool_symbol,
+      pool_address,
       amount_x,
       amount_y,
       lp_amount,
@@ -64,7 +67,7 @@ holding_days AS (
       CASE
         WHEN is_holding = 1 THEN
           ROW_NUMBER() OVER (
-            PARTITION BY user, protocol, pool_symbol, reset_id
+            PARTITION BY user, protocol, pool_symbol, reset_id, pool_address
             ORDER BY date
           )
         ELSE 0
@@ -79,6 +82,7 @@ points_calculation AS (
       protocol,
       pool_type,
       pool_symbol,
+      pool_address,
       amount_x,
       amount_y,
       lp_amount,
