@@ -116,6 +116,15 @@ sources:
             - not_null
 
       - name: quest_blacklist
+        freshness:
+          warn_after: null
+          error_after: null
+        columns:
+          - name: address
+            data_tests:
+            - unique
+            - not_null
+          
 
 
         
