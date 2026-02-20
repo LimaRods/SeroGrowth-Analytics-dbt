@@ -23,13 +23,13 @@ WITH base AS (
 first_lp_date AS (
   SELECT
     user,
-    pool_symbol,
     pool_address,
-    pool_type,
-    MIN(start_date) AS first_date
+    MIN(start_date) AS first_date,
+    ANY_VALUE(pool_symbol) AS pool_symbol,
+    ANY_VALUE(pool_type)   AS pool_type
   FROM base
   WHERE amount_x > 0 OR amount_y > 0
-  GROUP BY 1, 2, 3, 4
+  GROUP BY 1,2
 ),
 
 date_bounds AS (
@@ -77,7 +77,7 @@ daily_lp AS (
     ON b.user = c.user
    AND b.pool_address = c.pool_address
    AND c.date BETWEEN b.start_date AND b.end_date_c
- QUALIFY ROW_NUMBER() OVER (PARTITION BY c.date, c.user, c.pool_type,c.pool_symbol, c.pool_address ORDER BY b.start_date DESC) = 1
+ QUALIFY ROW_NUMBER() OVER (PARTITION BY c.date, c.user, c.pool_address ORDER BY b.start_date DESC) = 1
  
 )
 
