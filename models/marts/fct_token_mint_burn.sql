@@ -1,12 +1,3 @@
-{{
-    config(
-        materialized = 'incremental',
-        unique_key = ['date', 'symbol'],
-        incremental_strategy = 'merge'
-
-    )
-
-}}
 
 
 with base as (
@@ -23,10 +14,6 @@ with base as (
         END
         ) as daily_supply
     from {{ ref('stg_token_mint_burn') }}
-    {% if is_incremental() %}
-    where
-       date >= (SELECT DATEADD(day,-7,COALESCE(MAX(date), TO_DATE('1900-01-01'))) FROM {{ this }})
-    {% endif %}
     group by 1,2
 ),
 
