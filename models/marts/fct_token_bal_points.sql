@@ -1,11 +1,3 @@
-{{
-    config(
-        materialized = 'incremental',
-        unique_key = ['date', 'user', 'protocol', 'symbol', 'token_mint_address'],
-        incremental_strategy='merge'
-    )
-
-}}
 
 with
     base as (
@@ -13,12 +5,6 @@ with
             date, user, symbol, token_mint_address, coalesce(token_balance, 0) as token_balance
         from
             {{ ref("int_daily_token_balance") }}
-        {% if is_incremental() %}
-
-        where
-            date >= (SELECT DATEADD(day,-7,COALESCE(MAX(date), TO_DATE('1900-01-01'))) FROM {{ this }})
-
-        {% endif %}
 
     ),
 
