@@ -100,32 +100,100 @@ calc_points AS (
             ELSE j.awarded_points
         END AS base_points
     FROM joined j
+),
+
+combined_points AS (
+    SELECT
+        id,
+        user_id,
+        type,
+        source,
+        quest_id,
+        pool,
+        pool_type,
+        completed_at,
+        category AS quest_category,
+        symbol,
+        pool_symbol,
+        symbol_x,
+        amount_x,
+        symbol_y,
+        amount_y,
+        token_amount,
+        duration,
+        awarded_points,
+        base_points,
+        multiplier,
+        multiplier_x,
+        multiplier_y,
+        reward_type,
+        reward_token,
+        reward_amount
+    FROM calc_points
+
+    UNION ALL
+
+    SELECT
+        id,
+        user_id,
+        type,
+        source,
+        NULL             AS quest_id,
+        NULL             AS pool,          -- 'YT-...' or 'ELP-...' maps to pool
+        NULL             AS pool_type,
+        created_at       AS completed_at,
+        'ON_CHAIN'             AS quest_category,
+        symbol,
+        NULL             AS pool_symbol,
+        NULL             AS symbol_x,
+        NULL             AS amount_x,
+        NULL             AS symbol_y,
+        NULL             AS amount_y,
+        NULL             AS token_amount,
+        NULL             AS duration,
+        awarded_points,
+        NULL             AS base_points,
+        NULL             AS multiplier,
+        NULL             AS multiplier_x,
+        NULL             AS multiplier_y,
+        NULL             AS reward_type,
+        NULL             AS reward_token,
+        NULL             AS reward_amount
+    FROM {{ ref('stg_exponent_point') }}
 )
 
 SELECT
-    id,
-    user_id,
-    type,
-    source,
-    quest_id,
-    pool,
-    pool_type,
-    completed_at,
-    category AS quest_category,
-    symbol,
-    pool_symbol,
-    symbol_x,
-    amount_x,
-    symbol_y,
-    amount_y,
-    token_amount,
-    duration,
-    awarded_points,
-    base_points,
-    multiplier,
-    multiplier_x,
-    multiplier_y,
-    reward_type,
-    reward_token,
-    reward_amount
-FROM calc_points
+        id,
+        user_id,
+        type,
+        source,
+        quest_id,
+        pool,
+        pool_type,
+        completed_at,
+        quest_category,
+        CASE
+            WHEN source IN ('RAYDIUM', 'ORCA') THEN pool_symbol
+            WHEN source = 'EXPONENT' THEN symbol
+            WHEN source IN ('KAMINO', 'USX', 'EUSX') THEN type || ' ' || symbol
+            ELSE source
+        END AS product,
+        symbol,
+        pool_symbol,
+        symbol_x,
+        amount_x,
+        symbol_y,
+        amount_y,
+        token_amount,
+        duration,
+        awarded_points,
+        base_points,
+        multiplier,
+        multiplier_x,
+        multiplier_y,
+        reward_type,
+        reward_token,
+        reward_amount
+
+FROM
+    combined_points
