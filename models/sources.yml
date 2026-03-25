@@ -119,11 +119,14 @@ sources:
         freshness:
           warn_after: null
           error_after: null
+
+      - name: exponent_points
         columns:
-          - name: address
+          - name: id
             data_tests:
-            - unique
-            - not_null
+              - unique
+              - not_null
+
           
 
 
