@@ -72,7 +72,23 @@ final as (
         sum(daily_burns) over (partition by symbol order by date ) as cumulative_burns,
         sum(supply) over (partition by symbol order by date ) as total_supply
     from daily
+),
+
+-- Season enrichment
+seasons as (
+    select * from {{ ref('dim_seasons') }}
 )
 
-select *
-from final
+select
+    f.date,
+    f.symbol,
+    f.daily_mints,
+    f.daily_burns,
+    f.cumulative_mints,
+    f.cumulative_burns,
+    f.total_supply,
+    s.season
+from final f
+left join seasons s
+    on f.date >= s.start_date
+    and f.date <= s.end_date

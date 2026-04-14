@@ -70,14 +70,21 @@ daily_positions AS (
    AND b.token_mint_address = c.token_mint_address
    AND c.date BETWEEN b.start_date AND b.end_date_c
   QUALIFY ROW_NUMBER() OVER (PARTITION BY c.date, c.user, c.symbol, c.token_mint_address ORDER BY b.start_date DESC) = 1
+),
+
+-- Season enrichment
+seasons AS (
+  SELECT * FROM {{ ref('dim_seasons') }}
 )
 
-
 SELECT
-  date,
-  user,
-  symbol,
- token_mint_address,
-  COALESCE(token_balance, 0) AS token_balance
-FROM daily_positions
-
+  dp.date,
+  dp.user,
+  dp.symbol,
+  dp.token_mint_address,
+  COALESCE(dp.token_balance, 0) AS token_balance,
+  s.season
+FROM daily_positions dp
+LEFT JOIN seasons s
+    ON dp.date >= s.start_date
+    AND dp.date <= s.end_date

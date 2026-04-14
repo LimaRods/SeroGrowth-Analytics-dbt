@@ -10,6 +10,12 @@ quests AS (
     FROM {{ ref("stg_quests") }}
 ),
 
+-- Season lookup
+seasons AS (
+    SELECT *
+    FROM {{ ref("dim_seasons") }}
+),
+
 -- Split multiplier and token quests
 multiplier_quests AS (
     SELECT *
@@ -47,7 +53,7 @@ pool_match AS (
         COALESCE(qx.reward_type, qy.reward_type) AS reward_type,
         COALESCE(qx.reward_token, qy.reward_token) AS reward_token,
         COALESCE(qx.reward_amount, qy.reward_amount) AS reward_amount,
-        NULL AS multiplier, -- ORCA/RAYDIUM doesn’t use single multiplier
+        NULL AS multiplier,
         qx.multiplier_reward AS multiplier_x,
         qy.multiplier_reward AS multiplier_y
     FROM quest_completions qc
@@ -80,7 +86,7 @@ token_based AS (
         ON qc.quest_id = q.id
 ),
 
--- Combine all sources - exact same column order and count
+-- Combine all sources
 joined AS (
     SELECT * FROM direct_match
     UNION ALL
@@ -139,10 +145,10 @@ combined_points AS (
         type,
         source,
         NULL             AS quest_id,
-        NULL             AS pool,          -- 'YT-...' or 'ELP-...' maps to pool
+        NULL             AS pool,
         NULL             AS pool_type,
         created_at       AS completed_at,
-        'ON_CHAIN'             AS quest_category,
+        'ON_CHAIN'       AS quest_category,
         symbol,
         NULL             AS pool_symbol,
         NULL             AS symbol_x,
@@ -163,37 +169,42 @@ combined_points AS (
 )
 
 SELECT
-        id,
-        user_id,
-        type,
-        source,
-        quest_id,
-        pool,
-        pool_type,
-        completed_at,
-        quest_category,
-        CASE
-            WHEN source IN ('RAYDIUM', 'ORCA') THEN pool_symbol
-            WHEN source = 'EXPONENT' THEN symbol
-            WHEN source IN ('KAMINO', 'USX', 'EUSX') THEN type || ' ' || symbol
-            ELSE source
-        END AS product,
-        symbol,
-        pool_symbol,
-        symbol_x,
-        amount_x,
-        symbol_y,
-        amount_y,
-        token_amount,
-        duration,
-        awarded_points,
-        base_points,
-        multiplier,
-        multiplier_x,
-        multiplier_y,
-        reward_type,
-        reward_token,
-        reward_amount
+    cp.id,
+    cp.user_id,
+    cp.type,
+    cp.source,
+    cp.quest_id,
+    cp.pool,
+    cp.pool_type,
+    cp.completed_at,
+    cp.quest_category,
+    CASE
+        WHEN cp.source IN ('RAYDIUM', 'ORCA') THEN cp.pool_symbol
+        WHEN cp.source = 'EXPONENT' THEN cp.symbol
+        WHEN cp.source IN ('KAMINO', 'USX', 'EUSX') THEN cp.type || ' ' || cp.symbol
+        ELSE cp.source
+    END AS product,
+    cp.symbol,
+    cp.pool_symbol,
+    cp.symbol_x,
+    cp.amount_x,
+    cp.symbol_y,
+    cp.amount_y,
+    cp.token_amount,
+    cp.duration,
+    cp.awarded_points,
+    cp.base_points,
+    cp.multiplier,
+    cp.multiplier_x,
+    cp.multiplier_y,
+    cp.reward_type,
+    cp.reward_token,
+    cp.reward_amount,
 
-FROM
-    combined_points
+    -- Season enrichment
+    s.season
+
+FROM combined_points cp
+LEFT JOIN seasons s
+    ON cp.completed_at >= s.start_date
+    AND cp.completed_at <= s.end_date
