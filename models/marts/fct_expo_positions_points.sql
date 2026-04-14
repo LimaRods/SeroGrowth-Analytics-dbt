@@ -74,10 +74,18 @@ points_calculation as (
         {{ loyalty_tier_label("holding_streak_days") }} as loyalty_label,
         holding_streak_days
     from holding_days
+),
+-- Season enrichment
+seasons as (
+    select * from {{ ref('dim_seasons') }}
 )
 
 select
-    *,
-    base_points * overall_mult as total_points
-from points_calculation
-order by date, user, symbol, market
+    pc.*,
+    pc.base_points * pc.overall_mult as total_points,
+    s.season
+from points_calculation pc
+left join seasons s
+    on pc.date >= s.start_date
+    and pc.date <= s.end_date
+order by pc.date, pc.user, pc.symbol, pc.market

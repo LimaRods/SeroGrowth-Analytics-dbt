@@ -15,7 +15,6 @@ WITH usx_vault_events as (
     group by 1,2
 ),
 
-
 base AS (
     SELECT * FROM usx_vault_events
     --UNION ALL
@@ -33,7 +32,6 @@ aggregated AS (
     GROUP BY 1, 2
 ),
 
-
 date_bounds AS (
     SELECT
         MIN(date) AS min_date,
@@ -41,27 +39,23 @@ date_bounds AS (
     FROM aggregated
 ),
 
--- Generate ALL dates independently of events (constant ROWCOUNT, then trim)
 all_dates AS (
     SELECT
         DATEADD(day, SEQ4(), db.min_date) AS date
     FROM date_bounds db,
-         TABLE(GENERATOR(ROWCOUNT => 20000))  -- ~54 years; increase if needed
+         TABLE(GENERATOR(ROWCOUNT => 20000))
     WHERE DATEADD(day, SEQ4(), db.min_date) <= db.max_date
 ),
 
--- All tokens seen in the period
 all_symbols AS (
     SELECT DISTINCT symbol FROM aggregated
 ),
 
--- Full calendar: dates × tokens
 calendar_token AS (
     SELECT d.date, s.symbol
     FROM all_dates d
     CROSS JOIN all_symbols s
 ),
-
 
 daily AS (
     SELECT
@@ -75,7 +69,6 @@ daily AS (
         ON c.date = a.date AND c.symbol = a.symbol
 ),
 
--- Add cumulative metrics
 final as (
     select
         date,
@@ -83,11 +76,27 @@ final as (
         daily_mints AS daily_deposits,
         daily_redeems AS daily_withdrawals,
         sum(daily_mints) over (partition by symbol order by date) as cumulative_deposits,
-        sum(daily_redeems) over (partition by symbol order by date ) as cumulative_withdrawals,
-        sum(daily_netflow) over (partition by symbol order by date ) as total_tokens_locked
+        sum(daily_redeems) over (partition by symbol order by date) as cumulative_withdrawals,
+        sum(daily_netflow) over (partition by symbol order by date) as total_tokens_locked
     from daily
+),
+
+-- Season enrichment
+seasons as (
+    select * from {{ ref('dim_seasons') }}
 )
 
-select *
-from final
-order by date, symbol
+select
+    f.date,
+    f.symbol,
+    f.daily_deposits,
+    f.daily_withdrawals,
+    f.cumulative_deposits,
+    f.cumulative_withdrawals,
+    f.total_tokens_locked,
+    s.season
+from final f
+left join seasons s
+    on f.date >= s.start_date
+    and f.date <= s.end_date
+order by f.date, f.symbol

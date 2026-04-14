@@ -1,16 +1,10 @@
 {{
   config(
-    materialized = 'incremental',
-    incremental_strategy = 'merge',
-    unique_key = ['date', 'user', 'protocol', 'product_symbol', 'product_address']
+    materialized = 'table'
   )
 }}
 
-WITH watermark AS (
-  SELECT
-    DATEADD(day,-7,COALESCE(MAX(date), TO_DATE('1900-01-01'))) AS min_date
-  FROM {{ this }}
-),
+WITH
 
 points AS (
 
@@ -33,9 +27,6 @@ points AS (
         total_points AS overall_points,
         holding_streak_days
     FROM {{ ref('fct_token_bal_points') }}
-    {% if is_incremental() %}
-    WHERE date >= (SELECT min_date FROM watermark)
-    {% endif %}
 
     UNION ALL
 
@@ -58,9 +49,6 @@ points AS (
         total_points AS overall_points,
         holding_streak_days
     FROM {{ ref('fct_lp_points') }}
-    {% if is_incremental() %}
-    WHERE date >= (SELECT min_date FROM watermark)
-    {% endif %}
 
     UNION ALL
 
@@ -83,9 +71,6 @@ points AS (
         total_points AS overall_points,
         holding_streak_days
     FROM {{ ref('fct_expo_positions_points') }}
-    {% if is_incremental() %}
-    WHERE date >= (SELECT min_date FROM watermark)
-    {% endif %}
 
 ),
 
@@ -93,18 +78,42 @@ referrals AS (
     SELECT *
     FROM {{ ref('int_referrals') }}
     QUALIFY ROW_NUMBER() OVER(PARTITION BY referred_address ORDER BY created_at ASC) = 1
+),
+
+-- Season enrichment
+seasons AS (
+    SELECT * FROM {{ ref('dim_seasons') }}
 )
 
 SELECT
-    p.*,
+    p.date,
+    p.user,
+    p.protocol,
+    p.symbol,
+    p.product_symbol,
+    p.product_address,
+    p.token_balance,
+    p.amount_x,
+    p.amount_y,
+    p.total_liquidity,
+    p.base_mult,
+    p.base_points,
+    p.overall_mult_nocap,
+    p.overall_mult,
+    p.overall_points,
+    p.holding_streak_days,
     r.referral_code,
     CASE
         WHEN r.referral_code IS NOT NULL THEN 1
         ELSE 0
-    END AS referral_activated
+    END AS referral_activated,
+    s.season
 FROM points p
 LEFT JOIN referrals r
     ON p.user = r.referred_address
    AND p.date >= TO_DATE(r.created_at)
+LEFT JOIN seasons s
+    ON p.date >= s.start_date
+    AND p.date <= s.end_date
 WHERE
     p.total_liquidity > 0

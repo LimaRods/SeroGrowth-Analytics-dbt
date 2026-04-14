@@ -37,14 +37,30 @@ manual_fixes AS (
         'eUSX' AS symbol,
         55728634.4898 AS amount,
         'MINT' AS type
-)
+),
 
 --  Union all base data with the manual adjustments
-SELECT
-    *
-FROM (
+combined AS (
     SELECT * FROM base
     UNION ALL
     SELECT * FROM manual_fixes
+),
+
+seasons AS (
+    SELECT * FROM {{ ref('dim_seasons') }}
 )
-ORDER BY timestamp_ntz
+
+SELECT
+    c.id,
+    c.timestamp_ntz,
+    c.signature,
+    c.user,
+    c.token_mint_address,
+    c.symbol,
+    c.amount,
+    c.type,
+    s.season
+FROM combined c
+LEFT JOIN seasons s
+    ON DATE_TRUNC('day', c.timestamp_ntz) >= s.start_date
+    AND DATE_TRUNC('day', c.timestamp_ntz) <= s.end_date
