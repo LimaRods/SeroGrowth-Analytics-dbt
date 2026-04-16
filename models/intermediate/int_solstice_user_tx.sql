@@ -1,4 +1,3 @@
-
 WITH base AS (
     SELECT 
         timestamp_ntz,
@@ -18,11 +17,17 @@ referrals AS (
      SELECT
     *
     FROM {{ ref('int_referrals') }}
+),
+
+seasons AS (
+    SELECT *
+    FROM {{ ref("dim_seasons") }}
 )
 
 SELECT
     b.*,
     r.referral_code,
+    s.season,
     CASE 
         WHEN r.referral_code IS NOT NULL THEN 1
         ELSE 0
@@ -31,3 +36,6 @@ FROM base b
 LEFT JOIN referrals r
     ON b.user = r.referred_address
    AND b.timestamp_ntz >= r.created_at
+LEFT JOIN seasons s
+    ON  b.timestamp_ntz >= s.start_date
+    AND  b.timestamp_ntz <= s.end_date

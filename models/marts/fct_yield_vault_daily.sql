@@ -13,7 +13,6 @@ WITH vault_events AS (
     GROUP BY 1, 2
 ),
 
--- It doesn't mint eUSX
 harvest_inflows AS (
     SELECT
         DATE_TRUNC('day', timestamp_ntz) AS date,
@@ -25,13 +24,11 @@ harvest_inflows AS (
     GROUP BY 1, 2
 ),
 
-
 base AS (
     SELECT * FROM vault_events
     UNION ALL
     SELECT * FROM harvest_inflows
 ),
-
 
 aggregated AS (
     SELECT
@@ -61,12 +58,10 @@ all_dates AS (
     WHERE DATEADD(day, n, db.min_date) <= db.max_date
 ),
 
-
 all_symbols AS (
     SELECT DISTINCT symbol FROM aggregated
 ),
 
--- Full calendar: dates × tokens
 calendar_token AS (
     SELECT d.date, s.symbol
     FROM all_dates d
@@ -85,16 +80,25 @@ daily AS (
         ON c.date = a.date AND c.symbol = a.symbol
 ),
 
+seasons AS (
+    SELECT *
+    FROM {{ ref("dim_seasons") }}
+),
+
 final AS (
     SELECT
-        date,
-        symbol,
-        daily_deposits,
-        daily_withdrawals,
-        SUM(daily_deposits) OVER (PARTITION BY symbol ORDER BY date) AS cumulative_deposits,
-        SUM(daily_withdrawals) OVER (PARTITION BY symbol ORDER BY date) AS cumulative_withdrawals,
-        SUM(daily_netflow) OVER (PARTITION BY symbol ORDER BY date) AS total_tokens_locked
-    FROM daily
+        d.date,
+        d.symbol,
+        d.daily_deposits,
+        d.daily_withdrawals,
+        SUM(d.daily_deposits) OVER (PARTITION BY d.symbol ORDER BY d.date) AS cumulative_deposits,
+        SUM(d.daily_withdrawals) OVER (PARTITION BY d.symbol ORDER BY d.date) AS cumulative_withdrawals,
+        SUM(d.daily_netflow) OVER (PARTITION BY d.symbol ORDER BY d.date) AS total_tokens_locked,
+        s.season
+    FROM daily d
+    LEFT JOIN seasons s
+        ON d.date >= s.start_date
+        AND d.date <= s.end_date
 )
 
 SELECT *
