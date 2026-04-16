@@ -87,25 +87,35 @@ points_calculation AS (
       amount_y,
       lp_amount,
       total_liquidity,
-
-      -- multipliers & points
       {{ base_multiplier('pool_symbol') }}                                      AS base_mult,
       total_liquidity * {{ base_multiplier('pool_symbol') }}                    AS base_points,
-       {{ loyalty_multiplier('holding_streak_days') }}                         AS loyalty_mult,
-       {{ base_multiplier('pool_symbol') }} *  {{ loyalty_multiplier('holding_streak_days') }} AS overall_mult_nocap, --Add more multipliers
+      {{ loyalty_multiplier('holding_streak_days') }}                           AS loyalty_mult,
+      {{ base_multiplier('pool_symbol') }} * {{ loyalty_multiplier('holding_streak_days') }} AS overall_mult_nocap,
       CASE
-        WHEN {{ base_multiplier('pool_symbol') }} *  {{ loyalty_multiplier('holding_streak_days') }} > 10
-        THEN 10 ELSE {{ base_multiplier('pool_symbol') }} *  {{ loyalty_multiplier('holding_streak_days') }}
-    END AS overall_mult, --Add more multipliers
-     
-      {{ loyalty_tier_label('holding_streak_days') }}                                      AS loyalty_label,
+        WHEN {{ base_multiplier('pool_symbol') }} * {{ loyalty_multiplier('holding_streak_days') }} > 10
+        THEN 10 ELSE {{ base_multiplier('pool_symbol') }} * {{ loyalty_multiplier('holding_streak_days') }}
+      END AS overall_mult,
+      {{ loyalty_tier_label('holding_streak_days') }}                           AS loyalty_label,
       holding_streak_days
   FROM holding_days
+),
+
+seasons AS (
+    SELECT *
+    FROM {{ ref("dim_seasons") }}
+),
+
+final AS (
+    SELECT
+        pc.*,
+        pc.base_points * pc.overall_mult AS total_points,
+        s.season
+    FROM points_calculation pc
+    LEFT JOIN seasons s
+        ON pc.date >= s.start_date
+        AND pc.date <= s.end_date
 )
 
-SELECT 
-*,
-base_points * overall_mult AS total_points
-FROM
-    points_calculation
+SELECT *
+FROM final
 ORDER BY date, user, protocol, pool_symbol
