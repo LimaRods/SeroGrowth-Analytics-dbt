@@ -38,6 +38,8 @@ joined as (
         f.video_completions,
         f.total_engagements,
         f.total_conversion_value,
+        f.campaign_group_objective                                      as objective,
+        c.linkedin_objective                                            as campaign_objective,
         case
             when fx.usd_rate is null and f.currency_code != 'USD'
                 then 'missing_fx_rate'

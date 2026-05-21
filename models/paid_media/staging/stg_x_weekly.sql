@@ -37,6 +37,8 @@ joined as (
         f.result,
         c.result_type,
         f.conversions,
+        f.objective                                                     as objective,
+        c.x_objective                                                   as campaign_objective,
         case
             when fx.usd_rate is null and f.currency_code != 'USD'
                 then 'missing_fx_rate'

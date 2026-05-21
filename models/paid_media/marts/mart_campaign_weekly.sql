@@ -1,16 +1,5 @@
-{{
-    config(
-        materialized='incremental',
-        unique_key='record_key',
-        incremental_strategy='merge'
-    )
-}}
-
 with base as (
     select * from {{ ref('int_paid_media_with_ga4') }}
-    {% if is_incremental() %}
-        where week_date > (select max(week_date) from {{ this }})
-    {% endif %}
 ),
 
 clients as (
@@ -31,6 +20,8 @@ final as (
         b.utm_campaign,
         b.utm_content,
         b.result_type,
+        b.objective,
+        b.campaign_objective,
 
         /* Spend */
         b.spend_native,

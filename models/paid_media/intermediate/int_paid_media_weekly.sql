@@ -1,11 +1,3 @@
-{{
-    config(
-        materialized='incremental',
-        unique_key='record_key',
-        incremental_strategy='merge'
-    )
-}}
-
 with x as (
     select
         {{ dbt_utils.generate_surrogate_key(['\'x_ads\'', 'campaign_id', 'ad_group_id', 'week_date']) }} as record_key,
@@ -29,11 +21,10 @@ with x as (
         result,
         result_type,
         conversions,
+        objective,
+        campaign_objective,
         data_quality_flag
     from {{ ref('stg_x_weekly') }}
-    {% if is_incremental() %}
-        where week_date > (select max(week_date) from {{ this }})
-    {% endif %}
 ),
 
 linkedin_agg as (
@@ -53,11 +44,10 @@ linkedin_agg as (
         sum(clicks_to_landing_page) as link_clicks,
         sum(engagements)            as engagements,
         sum(conversions)            as conversions,
+        max(objective)              as objective,
+        max(campaign_objective)     as campaign_objective,
         max(data_quality_flag)      as data_quality_flag
     from {{ ref('stg_linkedin_daily') }}
-    {% if is_incremental() %}
-        where day_date > (select max(week_date) from {{ this }})
-    {% endif %}
     group by 1, 2, 3, 4, 5, 6, 7, 8
 ),
 
@@ -84,6 +74,8 @@ linkedin as (
         null::bigint        as result,
         'clicks'            as result_type,
         conversions,
+        objective,
+        campaign_objective,
         data_quality_flag
     from linkedin_agg
 ),
@@ -111,11 +103,10 @@ google as (
         null::bigint        as result,
         click_type          as result_type,
         conversions,
+        objective,
+        campaign_objective,
         data_quality_flag
     from {{ ref('stg_google_weekly') }}
-    {% if is_incremental() %}
-        where week_date > (select max(week_date) from {{ this }})
-    {% endif %}
 ),
 
 unioned as (
