@@ -21,26 +21,24 @@ joined as (
         c.client_id,
         'x_ads'                                                         as channel_id,
         c.campaign_name,
+        c.utm_campaign,
+        c.x_objective                                                   as campaign_objective,
+        f.objective,
         f.ad_group_id,
         f.ad_group_name,
-        c.utm_campaign,
         f.utm_content,
         f.week_date,
         f.spend_native,
-        coalesce(f.currency_code, cl.x_currency)                        as currency_code,
-        round(f.spend_native * coalesce(fx.usd_rate, 1.0), 2)          as spend_usd,
+        coalesce(c.currency_code, cl.x_currency)                        as currency_code,
+        round(f.spend_native * coalesce(fx.usd_rate, 1.0), 2)            as spend_usd,
+        f.ad_group_total_budget,
         f.impressions,
         f.reach,
         f.frequency,
         f.link_clicks,
-        f.engagements,
-        f.result,
-        c.result_type,
-        f.conversions,
-        f.objective                                                     as objective,
-        c.x_objective                                                   as campaign_objective,
+        f.status                                                        as ad_group_status,
         case
-            when fx.usd_rate is null and f.currency_code != 'USD'
+            when fx.usd_rate is null and coalesce(c.currency_code, cl.x_currency) != 'USD'
                 then 'missing_fx_rate'
             else f.data_quality_flag
         end                                                             as data_quality_flag
@@ -50,7 +48,7 @@ joined as (
     left join clients cl
         on cl.client_id = c.client_id
     left join fx
-        on  fx.currency_code = coalesce(f.currency_code, cl.x_currency)
+        on  fx.currency_code = coalesce(c.currency_code, cl.x_currency)
         and fx.week_starting  = date_trunc('week', f.week_date)
 ),
 

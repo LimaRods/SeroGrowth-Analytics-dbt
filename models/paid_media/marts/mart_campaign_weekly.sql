@@ -19,7 +19,6 @@ final as (
         b.ad_group_name,
         b.utm_campaign,
         b.utm_content,
-        b.result_type,
         b.objective,
         b.campaign_objective,
 
@@ -33,8 +32,8 @@ final as (
         b.reach,
         b.link_clicks,
         b.engagement_clicks,
+        b.clicks,
         b.engagements,
-        b.result,
         b.conversions,
 
         /* Derived metrics */
