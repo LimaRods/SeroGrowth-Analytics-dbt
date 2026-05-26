@@ -23,8 +23,6 @@ joined as (
         p.spend_usd,
         p.impressions,
         p.reach,
-        p.link_clicks,
-        p.engagement_clicks,
         p.clicks,
         p.engagements,
         p.conversions,
@@ -38,18 +36,14 @@ joined as (
         g.key_events,
         g.engagement_rate,
         case
-            when p.utm_campaign = g.utm_campaign
-             and p.utm_content  = g.utm_content      then 'ad_group'
-            when p.utm_campaign = g.utm_campaign
-             and g.utm_content  is null               then 'campaign'
-            when p.channel_id   = g.linked_channel_id then 'channel'
+            when g.utm_content is not null then 'ad_group'
             else 'unjoined'
         end                                             as attribution_join_tier
     from paid p
     left join ga4 g
-        on  g.utm_campaign = p.utm_campaign
-        and g.week_date    = p.week_date
-        and g.client_id    = p.client_id
+        on  g.utm_content = p.utm_content
+        and g.week_date   = p.week_date
+        and g.client_id   = p.client_id
 ),
 
 final as (
