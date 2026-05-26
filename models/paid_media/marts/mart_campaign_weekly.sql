@@ -1,5 +1,52 @@
-with base as (
-    select * from {{ ref('int_paid_media_with_ga4') }}
+/* Grain: campaign × week. True campaign rollup across all channels.
+   Paid metrics are summed from int_paid_media_weekly (pre-GA4 join, so the
+   GA4 fan-out can't double-count). GA4 is aggregated to campaign grain and
+   joined once. For sub-campaign (ad group / ad set) detail use mart_ad_group_weekly. */
+
+with paid as (
+    select * from {{ ref('int_paid_media_weekly') }}
+),
+
+paid_agg as (
+    select
+        channel_id,
+        client_id,
+        campaign_id,
+        campaign_name,
+        utm_campaign,
+        campaign_objective,
+        currency_code,
+        week_date,
+        sum(spend_native)      as spend_native,
+        sum(spend_usd)         as spend_usd,
+        sum(impressions)       as impressions,
+        sum(reach)             as reach,
+        sum(clicks)            as clicks,
+        sum(engagements)       as engagements,
+        sum(conversions)       as conversions,
+        max(data_quality_flag) as data_quality_flag
+    from paid
+    group by 1, 2, 3, 4, 5, 6, 7, 8
+),
+
+ga4 as (
+    /* Aggregate GA4 to (client, utm_campaign, week) once, so joining to the
+       campaign-grain paid rows is 1:1 and can't fan out. Assumes ingestion
+       keeps a campaign as EITHER content-level rows OR a single campaign-level
+       (utm_content NULL) fallback row — never both — per the schema doc. */
+    select
+        client_id,
+        utm_campaign,
+        week_date,
+        sum(ga4_sessions)     as ga4_sessions,
+        sum(ga4_users)        as ga4_users,
+        sum(engaged_sessions) as engaged_sessions,
+        sum(key_events)       as key_events,
+        case when sum(ga4_sessions) > 0
+             then round(sum(engaged_sessions) / sum(ga4_sessions)::float, 4)
+        end                   as engagement_rate
+    from {{ ref('stg_ga4_weekly') }}
+    group by 1, 2, 3
 ),
 
 clients as (
@@ -8,68 +55,49 @@ clients as (
 
 final as (
     select
-        b.record_key,
-        b.week_date,
-        b.channel_id,
-        b.client_id,
+        {{ dbt_utils.generate_surrogate_key(['p.channel_id', 'p.campaign_id', 'p.week_date']) }} as record_key,
+        p.week_date,
+        p.channel_id,
+        p.client_id,
         cl.client_name,
-        b.campaign_id,
-        b.campaign_name,
-        b.ad_group_id,
-        b.ad_group_name,
-        b.utm_campaign,
-        b.utm_content,
-        b.objective,
-        b.campaign_objective,
+        p.campaign_id,
+        p.campaign_name,
+        p.utm_campaign,
+        p.campaign_objective,
 
         /* Spend */
-        b.spend_native,
-        b.currency_code,
-        b.spend_usd,
+        p.spend_native,
+        p.currency_code,
+        p.spend_usd,
 
         /* Volume */
-        b.impressions,
-        b.reach,
-        b.link_clicks,
-        b.engagement_clicks,
-        b.clicks,
-        b.engagements,
-        b.conversions,
+        p.impressions,
+        p.reach,
+        p.clicks,
+        p.engagements,
+        p.conversions,
 
         /* Derived metrics */
-        case
-            when b.impressions > 0
-                then round(b.link_clicks / b.impressions::float, 6)
-        end                                                             as ctr,
+        case when p.impressions > 0 then round(p.clicks / p.impressions::float, 6) end      as ctr,
+        case when p.impressions > 0 then round(p.spend_usd * 1000.0 / p.impressions, 4) end as cpm_usd,
+        case when p.clicks       > 0 then round(p.spend_usd / p.clicks, 4) end              as cpc_usd,
+        case when p.conversions  > 0 then round(p.spend_usd / p.conversions::float, 4) end   as cpa_usd,
 
-        case
-            when b.impressions > 0
-                then round(b.spend_usd * 1000.0 / b.impressions, 4)
-        end                                                             as cpm_usd,
+        /* GA4 attribution (campaign grain) */
+        g.ga4_sessions,
+        g.ga4_users,
+        g.engaged_sessions,
+        g.key_events,
+        g.engagement_rate,
 
-        case
-            when b.link_clicks > 0
-                then round(b.spend_usd / b.link_clicks, 4)
-        end                                                             as cpc_usd,
-
-        case
-            when b.conversions > 0
-                then round(b.spend_usd / b.conversions::float, 4)
-        end                                                             as cpa_usd,
-
-        /* GA4 attribution */
-        b.ga4_sessions,
-        b.ga4_users,
-        b.engaged_sessions,
-        b.avg_session_time,
-        b.key_events,
-        b.engagement_rate,
-        b.attribution_join_tier,
-
-        b.data_quality_flag
-    from base b
+        p.data_quality_flag
+    from paid_agg p
+    left join ga4 g
+        on  g.client_id    = p.client_id
+        and g.utm_campaign = p.utm_campaign
+        and g.week_date    = p.week_date
     left join clients cl
-        on cl.client_id = b.client_id
+        on cl.client_id = p.client_id
 )
 
 select * from final
