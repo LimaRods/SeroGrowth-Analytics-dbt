@@ -127,7 +127,24 @@ sources:
               - unique
               - not_null
 
-          
+  - name: paid_media
+    database: PAID_MEDIA_DB
+    schema: DEV
+
+    tables:
+      - name: agency_settings
+      - name: clients
+      - name: dim_channels
+      - name: usd_fx_rates
+      - name: campaigns_x
+      - name: fct_x_weekly
+      - name: campaigns_linkedin
+      - name: fct_linkedin_daily
+      - name: campaigns_google
+      - name: fct_google_weekly
+      - name: campaigns_ga4
+      - name: fct_ga4_weekly
+
 
 
         

@@ -37,25 +37,34 @@ clean-targets:         # directories to be removed by `dbt clean`
 
 models:
   sero_analytics:
-    +database: solstice_analytics
 
-    staging:
-      +materialized: view
-      blacklisted_addresses:
-        +enabled: False
+    Solstice:
+      +database: solstice_analytics
+      staging:
+        +materialized: view
+        blacklisted_addresses:
+          +enabled: False
+      intermediate:
+        +materialized: table
+        int_flares_by_lp:
+          +enabled: false
+        int_flares_by_token_balance:
+          +enabled: false
+        int_flares_by_expo_lp:
+          +enabled: false
+      marts:
+        +materialized: table
+        non_registered_flares_by_positions:
+          +enabled: False
+        total_provision_wallet:
+          +enabled: false
 
-    intermediate:
-      +materialized: table
-      int_flares_by_lp:
-        +enabled: false
-      int_flares_by_token_balance:
-        +enabled: false
-      int_flares_by_expo_lp:
-        +enabled: false
-
-    marts:
-      +materialized: table
-      non_registered_flares_by_positions:
-        +enabled: False
-      total_provision_wallet:
-        +enabled: false
+    paid_media:
+      +database: PAID_MEDIA_DB
+      +schema: DEV
+      staging:
+        +materialized: view
+      intermediate:
+        +materialized: table
+      marts:
+        +materialized: table
