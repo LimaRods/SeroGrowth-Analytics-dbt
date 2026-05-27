@@ -61,7 +61,6 @@ models:
 
     paid_media:
       +database: PAID_MEDIA_DB
-      +schema: DEV
       staging:
         +materialized: view
       intermediate:
