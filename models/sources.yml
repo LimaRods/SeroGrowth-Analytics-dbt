@@ -116,9 +116,10 @@ sources:
             - not_null
 
       - name: quest_blacklist
-        freshness:
-          warn_after: null
-          error_after: null
+        config:
+          freshness:
+            warn_after: null
+            error_after: null
 
       - name: exponent_points
         columns:
@@ -127,6 +128,8 @@ sources:
               - unique
               - not_null
 
+
+# PAID MEDIA SOURCE
   - name: paid_media
     database: PAID_MEDIA_DB
     schema: DEV
