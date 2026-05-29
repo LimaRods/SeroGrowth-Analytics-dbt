@@ -33,15 +33,17 @@ models:
         data_tests:
           - not_null
           - accepted_values:
-              values: [x_ads, linkedin_ads, google_ads]
+              arguments:
+                values: [x_ads, linkedin_ads, google_ads]
 
       - name: client_id
         description: SHA256("{client_name}SeroIntelligence2025"); FK to clients.
         data_tests:
           - not_null
           - relationships:
-              to: source('paid_media', 'clients')
-              field: client_id
+              arguments:
+                to: source('paid_media', 'clients')
+                field: client_id
 
       - name: client_name
         description: Client display name, looked up from clients dim.
@@ -162,7 +164,8 @@ models:
           'unjoined' when there was no GA4 row at this utm_content + week.
         data_tests:
           - accepted_values:
-              values: [ad_group, unjoined]
+              arguments:
+                values: [ad_group, unjoined]
 
       - name: data_quality_flag
         description: |
@@ -170,7 +173,8 @@ models:
           Currently used: missing_fx_rate (non-USD spend with no FX row for the week).
         data_tests:
           - accepted_values:
-              values: [partial_data, anomalous_metric, late_arriving, manual_review, missing_fx_rate]
+              arguments:
+                values: [partial_data, anomalous_metric, late_arriving, manual_review, missing_fx_rate]
               config:
                 where: data_quality_flag is not null
 
@@ -204,15 +208,17 @@ models:
         data_tests:
           - not_null
           - accepted_values:
-              values: [x_ads, linkedin_ads, google_ads]
+              arguments:
+                values: [x_ads, linkedin_ads, google_ads]
 
       - name: client_id
         description: FK to clients. SHA256("{client_name}SeroIntelligence2025").
         data_tests:
           - not_null
           - relationships:
-              to: source('paid_media', 'clients')
-              field: client_id
+              arguments:
+                to: source('paid_media', 'clients')
+                field: client_id
 
       - name: client_name
         description: Client display name from clients dim.
@@ -307,6 +313,7 @@ models:
           MAX of the underlying data_quality_flag values. NULL = clean.
         data_tests:
           - accepted_values:
-              values: [partial_data, anomalous_metric, late_arriving, manual_review, missing_fx_rate]
+              arguments:
+                values: [partial_data, anomalous_metric, late_arriving, manual_review, missing_fx_rate]
               config:
                 where: data_quality_flag is not null

@@ -17,8 +17,9 @@ models:
         data_tests:
           - not_null
           - relationships:
-              to: source('paid_media', 'campaigns_x')
-              field: campaign_id
+              arguments:
+                to: source('paid_media', 'campaigns_x')
+                field: campaign_id
       - name: ad_group_id
         data_tests:
           - not_null
@@ -32,13 +33,15 @@ models:
         description: Delivery status from the export.
         data_tests:
           - accepted_values:
-              values: [active, expired, paused, campaign_paused, draft]
+              arguments:
+                values: [active, expired, paused, campaign_paused, draft]
               config:
                 where: ad_group_status is not null
       - name: data_quality_flag
         data_tests:
           - accepted_values:
-              values: [partial_data, anomalous_metric, late_arriving, manual_review, missing_fx_rate]
+              arguments:
+                values: [partial_data, anomalous_metric, late_arriving, manual_review, missing_fx_rate]
               config:
                 where: data_quality_flag is not null
 
@@ -56,8 +59,9 @@ models:
         data_tests:
           - not_null
           - relationships:
-              to: source('paid_media', 'campaigns_linkedin')
-              field: campaign_id
+              arguments:
+                to: source('paid_media', 'campaigns_linkedin')
+                field: campaign_id
       - name: ad_set_id
         data_tests:
           - not_null
@@ -74,13 +78,15 @@ models:
         description: LinkedIn cost type. Nullable when the export doesn't expose it.
         data_tests:
           - accepted_values:
-              values: [CPM, CPC, CPV]
+              arguments:
+                values: [CPM, CPC, CPV]
               config:
                 where: ad_set_cost_type is not null
       - name: data_quality_flag
         data_tests:
           - accepted_values:
-              values: [partial_data, anomalous_metric, late_arriving, manual_review, missing_fx_rate]
+              arguments:
+                values: [partial_data, anomalous_metric, late_arriving, manual_review, missing_fx_rate]
               config:
                 where: data_quality_flag is not null
 
@@ -98,8 +104,9 @@ models:
         data_tests:
           - not_null
           - relationships:
-              to: source('paid_media', 'campaigns_google')
-              field: campaign_id
+              arguments:
+                to: source('paid_media', 'campaigns_google')
+                field: campaign_id
       - name: week_date
         data_tests:
           - not_null
@@ -110,13 +117,15 @@ models:
         description: Per-row Google campaign type. Determines intent vs engagement click semantics in int_paid_media_weekly.
         data_tests:
           - accepted_values:
-              values: ['Search', 'Demand Gen', 'Performance Max', 'Display', 'Video']
+              arguments:
+                values: ['Search', 'Demand Gen', 'Performance Max', 'Display', 'Video']
               config:
                 where: campaign_type is not null
       - name: data_quality_flag
         data_tests:
           - accepted_values:
-              values: [partial_data, anomalous_metric, late_arriving, manual_review, missing_fx_rate]
+              arguments:
+                values: [partial_data, anomalous_metric, late_arriving, manual_review, missing_fx_rate]
               config:
                 where: data_quality_flag is not null
 
