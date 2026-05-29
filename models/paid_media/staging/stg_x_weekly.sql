@@ -35,7 +35,7 @@ joined as (
         f.impressions,
         f.reach,
         f.frequency,
-        f.link_clicks,
+        f.link_clicks AS clicks,
         f.status                                                        as ad_group_status,
         case
             when fx.usd_rate is null and coalesce(c.currency_code, cl.x_currency) != 'USD'

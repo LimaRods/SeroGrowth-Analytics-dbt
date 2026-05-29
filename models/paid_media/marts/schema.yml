@@ -1,0 +1,319 @@
+version: 2
+
+models:
+
+  # ===========================================================================
+  - name: mart_ad_group_weekly
+    description: |
+      Finest sub-campaign grain per channel, weekly. The dashboard-ready table
+      for ad-group / ad-set drill-down.
+
+      Grain by channel:
+        X        → (campaign_id, ad_group_id, week_date)
+        LinkedIn → (campaign_id, ad_set_id mapped to ad_group_id, week_date)
+        Google   → (campaign_id, week_date) — no sub-campaign level in the export
+
+      GA4 attribution is joined at utm_content grain in int_paid_media_with_ga4,
+      so Google rows (utm_content NULL) carry NULL GA4 metrics. Use
+      mart_campaign_weekly for campaign-level GA4 on Google.
+    columns:
+      - name: record_key
+        description: Surrogate primary key — md5 of (channel_id, campaign_id, ad_group_id, week_date).
+        data_tests:
+          - unique
+          - not_null
+
+      - name: week_date
+        description: ISO Monday of the week the metrics belong to.
+        data_tests:
+          - not_null
+
+      - name: channel_id
+        description: Source channel.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [x_ads, linkedin_ads, google_ads]
+
+      - name: client_id
+        description: SHA256("{client_name}SeroIntelligence2025"); FK to clients.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: source('paid_media', 'clients')
+                field: client_id
+
+      - name: client_name
+        description: Client display name, looked up from clients dim.
+
+      - name: campaign_id
+        description: Platform-native campaign ID (X / LinkedIn) or synthetic 12-digit hash (Google).
+        data_tests:
+          - not_null
+
+      - name: campaign_name
+        description: Raw campaign name from the export.
+
+      - name: ad_group_id
+        description: |
+          X ad-group ID, LinkedIn ad-set ID (mapped here for cross-channel symmetry),
+          or NULL for Google (no sub-campaign grain).
+
+      - name: ad_group_name
+        description: Human-readable ad-group / ad-set name. NULL for Google.
+
+      - name: utm_campaign
+        description: Slugified full campaign name (lowercase-hyphen). Join key to GA4 at campaign grain.
+
+      - name: utm_content
+        description: |
+          slug(ad_group_name)-ad_group_id for X / LinkedIn; NULL for Google.
+          Used as the GA4 join key in int_paid_media_with_ga4.
+
+      - name: objective
+        description: |
+          Per-row marketing objective at the fct grain.
+            X        → per-row Objective from the export
+            LinkedIn → ad_set_objective
+            Google   → campaign_type (Search / Demand Gen / PMax / Display / Video)
+
+      - name: campaign_objective
+        description: |
+          Campaign-level objective.
+            X        → MODE of fct.objective per campaign
+            LinkedIn → MODE of fct.ad_set_objective per campaign
+            Google   → parsed from campaign name (e.g. "Website Traffic")
+
+      # --- Spend ---
+      - name: spend_native
+        description: Spend in `currency_code`. 0.00 for ad-groups with no delivery this week.
+        data_tests:
+          - not_null
+
+      - name: currency_code
+        description: ISO 4217 currency, per campaign. Falls back to clients.*_currency at the staging layer.
+        data_tests:
+          - not_null
+
+      - name: spend_usd
+        description: spend_native × usd_fx_rates.usd_rate; identity (×1) when currency is USD.
+        data_tests:
+          - not_null
+
+      # --- Volume metrics ---
+      - name: impressions
+        description: Impressions from the export.
+
+      - name: reach
+        description: Unique users reached. NULL for Google (not in the preset).
+
+      - name: clicks
+        description: |
+          Channel-native click count.
+            X        → link_clicks (the only click metric in the X preset)
+            LinkedIn → total Clicks
+            Google   → Clicks (single column)
+
+      - name: engagements
+        description: |
+          Broader engagement count (beyond clicks).
+            X        → NULL (not in the preset)
+            LinkedIn → total_engagements (reactions + comments + shares + follows + …)
+            Google   → Engagements column from the export
+
+      - name: conversions
+        description: Conversions as reported by the platform. Google is fractional (NUMERIC).
+
+      # --- Derived rate metrics ---
+      - name: ctr
+        description: clicks / impressions. NULL when impressions = 0.
+
+      - name: cpm_usd
+        description: spend_usd × 1000 / impressions. NULL when impressions = 0.
+
+      - name: cpc_usd
+        description: spend_usd / clicks. NULL when clicks = 0.
+
+      - name: cpa_usd
+        description: spend_usd / conversions. NULL when conversions = 0.
+
+      # --- GA4 attribution (joined at utm_content grain) ---
+      - name: ga4_sessions
+        description: Sessions GA4 attributed to this utm_content + week.
+
+      - name: ga4_users
+        description: Distinct users GA4 attributed to this utm_content + week.
+
+      - name: engaged_sessions
+        description: GA4 engaged sessions (>10s, >1 event, or conversion).
+
+      - name: avg_session_time
+        description: Mean session duration in seconds.
+
+      - name: key_events
+        description: GA4 key events (= conversions in GA4's new model).
+
+      - name: engagement_rate
+        description: GA4 engagement_rate as reported (engaged_sessions / sessions).
+
+      - name: attribution_join_tier
+        description: |
+          How the GA4 row matched: 'ad_group' when utm_content matched a GA4 row,
+          'unjoined' when there was no GA4 row at this utm_content + week.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [ad_group, unjoined]
+
+      - name: data_quality_flag
+        description: |
+          Soft data-quality marker. NULL = clean.
+          Currently used: missing_fx_rate (non-USD spend with no FX row for the week).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [partial_data, anomalous_metric, late_arriving, manual_review, missing_fx_rate]
+              config:
+                where: data_quality_flag is not null
+
+
+  # ===========================================================================
+  - name: mart_campaign_weekly
+    description: |
+      True campaign rollup across all channels, weekly.
+
+      Grain: (channel_id, campaign_id, week_date) — one row per campaign per week.
+
+      Paid metrics are aggregated from int_paid_media_weekly (pre-GA4) so the
+      utm_content GA4 join in int_paid_media_with_ga4 cannot double-count
+      sessions on aggregation. GA4 is joined once at (client_id, utm_campaign,
+      week_date) grain, which works for all three channels — including Google,
+      whose ad-group mart has NULL GA4 because Google rows have utm_content NULL.
+    columns:
+      - name: record_key
+        description: Surrogate primary key — md5 of (channel_id, campaign_id, week_date).
+        data_tests:
+          - unique
+          - not_null
+
+      - name: week_date
+        description: ISO Monday of the week.
+        data_tests:
+          - not_null
+
+      - name: channel_id
+        description: Source channel.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [x_ads, linkedin_ads, google_ads]
+
+      - name: client_id
+        description: FK to clients. SHA256("{client_name}SeroIntelligence2025").
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: source('paid_media', 'clients')
+                field: client_id
+
+      - name: client_name
+        description: Client display name from clients dim.
+
+      - name: campaign_id
+        description: Platform campaign ID (or synthetic for Google).
+        data_tests:
+          - not_null
+
+      - name: campaign_name
+        description: Raw campaign name from the export.
+
+      - name: utm_campaign
+        description: Slugified full campaign name. GA4 join key at campaign grain.
+
+      - name: campaign_objective
+        description: |
+          Campaign-level marketing objective.
+            X        → MODE of fct.objective per campaign
+            LinkedIn → MODE of ad_set_objective per campaign
+            Google   → parsed from campaign name
+
+      # --- Spend ---
+      - name: spend_native
+        description: Sum of spend_native across the campaign's sub-campaign rows.
+        data_tests:
+          - not_null
+
+      - name: currency_code
+        description: ISO 4217 currency, per campaign (falls back to clients.*_currency).
+        data_tests:
+          - not_null
+
+      - name: spend_usd
+        description: Sum of spend_usd (per-row spend_native × usd_rate from usd_fx_rates).
+        data_tests:
+          - not_null
+
+      # --- Volume metrics ---
+      - name: impressions
+        description: Sum of impressions across sub-campaign rows for the campaign × week.
+
+      - name: reach
+        description: |
+          Sum of reach across sub-campaign rows. NULL for Google. Note: summing
+          reach across ad-groups overstates unique reach (the same user can
+          appear in multiple ad-groups); treat as an upper bound.
+
+      - name: clicks
+        description: Channel-native click count summed to campaign grain.
+
+      - name: engagements
+        description: Engagement count summed to campaign grain. NULL contribution from X.
+
+      - name: conversions
+        description: Conversions summed to campaign grain. Google is fractional.
+
+      # --- Derived rate metrics ---
+      - name: ctr
+        description: clicks / impressions at campaign grain. NULL when impressions = 0.
+
+      - name: cpm_usd
+        description: spend_usd × 1000 / impressions. NULL when impressions = 0.
+
+      - name: cpc_usd
+        description: spend_usd / clicks. NULL when clicks = 0.
+
+      - name: cpa_usd
+        description: spend_usd / conversions. NULL when conversions = 0.
+
+      # --- GA4 attribution (joined at utm_campaign grain) ---
+      - name: ga4_sessions
+        description: |
+          GA4 sessions for (client_id, utm_campaign, week_date), summed across
+          utm_content rows in stg_ga4_weekly. Works for all channels including
+          Google (whose paid rows have utm_content NULL).
+
+      - name: ga4_users
+        description: GA4 users summed to campaign grain.
+
+      - name: engaged_sessions
+        description: GA4 engaged sessions summed to campaign grain.
+
+      - name: key_events
+        description: GA4 key events summed to campaign grain.
+
+      - name: engagement_rate
+        description: Recomputed from the aggregated sums (engaged_sessions / ga4_sessions).
+
+      - name: data_quality_flag
+        description: |
+          MAX of the underlying data_quality_flag values. NULL = clean.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [partial_data, anomalous_metric, late_arriving, manual_review, missing_fx_rate]
+              config:
+                where: data_quality_flag is not null
