@@ -60,7 +60,7 @@ linkedin_agg as (
 
 linkedin as (
     select
-        {{ dbt_utils.generate_surrogate_key(['\'linkedin_ads\', 'campaign_id', 'ad_set_id', 'week_date']) }} as record_key,
+        {{ dbt_utils.generate_surrogate_key(['\'linkedin_ads\'', 'campaign_id', 'ad_set_id', 'week_date']) }} as record_key,
         channel_id,
         client_id,
         campaign_id,
