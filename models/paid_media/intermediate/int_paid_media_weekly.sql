@@ -23,7 +23,7 @@ with x as (
         spend_usd,
         impressions,
         reach,
-        clicks,
+        link_clicks          as clicks,
         null::bigint         as engagements,
         null::bigint         as conversions,
         objective,
@@ -60,7 +60,7 @@ linkedin_agg as (
 
 linkedin as (
     select
-        {{ dbt_utils.generate_surrogate_key(['\'linkedin_ads\'', 'campaign_id', 'ad_set_id', 'week_date']) }} as record_key,
+        {{ dbt_utils.generate_surrogate_key(['\'linkedin_ads\', 'campaign_id', 'ad_set_id', 'week_date']) }} as record_key,
         channel_id,
         client_id,
         campaign_id,
