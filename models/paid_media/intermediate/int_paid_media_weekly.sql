@@ -23,7 +23,7 @@ with x as (
         spend_usd,
         impressions,
         reach,
-        link_clicks          as clicks,
+        clicks,
         null::bigint         as engagements,
         null::bigint         as conversions,
         objective,
