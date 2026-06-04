@@ -126,6 +126,36 @@ models:
       - name: conversions
         description: Conversions as reported by the platform. Google is fractional (NUMERIC).
 
+      # --- Channel-specific engagement metrics (NULL for channels they don't apply to) ---
+      - name: video_views
+        description: "X: video views."
+      - name: video_played_25
+        description: "X: video plays reaching 25%."
+      - name: video_played_50
+        description: "X: video plays reaching 50%."
+      - name: video_played_75
+        description: "X: video plays reaching 75%."
+      - name: video_completions
+        description: "X: completed video views."
+      - name: video_views_2s
+        description: "X: 2-second video views."
+      - name: sessions
+        description: "X: web sessions."
+      - name: app_installs
+        description: "X: app installs."
+      - name: app_sign_ups
+        description: "X: app sign ups."
+      - name: app_sessions
+        description: "X: app sessions."
+      - name: app_checkouts_initiated
+        description: "X: app checkouts initiated."
+      - name: skan_app_installs
+        description: "X: SKAN app installs."
+      - name: impr_abs_top_pct
+        description: "Google: impression absolute-top share (fraction 0..1)."
+      - name: impr_top_pct
+        description: "Google: impression top share (fraction 0..1)."
+
       # --- Derived rate metrics ---
       - name: ctr
         description: clicks / impressions. NULL when impressions = 0.
@@ -138,6 +168,24 @@ models:
 
       - name: cpa_usd
         description: spend_usd / conversions. NULL when conversions = 0.
+
+      # --- Derived cost-per (X engagement metrics; NULL where the count is 0/NULL) ---
+      - name: cost_per_video_view_usd
+        description: spend_usd / video_views.
+      - name: cost_per_video_completion_usd
+        description: spend_usd / video_completions.
+      - name: cost_per_session_usd
+        description: spend_usd / sessions.
+      - name: cost_per_app_install_usd
+        description: spend_usd / app_installs.
+      - name: cost_per_app_signup_usd
+        description: spend_usd / app_sign_ups.
+      - name: cost_per_app_session_usd
+        description: spend_usd / app_sessions.
+      - name: cost_per_app_checkout_usd
+        description: spend_usd / app_checkouts_initiated.
+      - name: cost_per_skan_install_usd
+        description: spend_usd / skan_app_installs.
 
       # --- GA4 attribution (joined at utm_content grain) ---
       - name: ga4_sessions
@@ -276,6 +324,36 @@ models:
       - name: conversions
         description: Conversions summed to campaign grain. Google is fractional.
 
+      # --- Channel-specific engagement metrics (summed; NULL for channels they don't apply to) ---
+      - name: video_views
+        description: "X: video views (summed to campaign grain)."
+      - name: video_played_25
+        description: "X: video plays reaching 25%."
+      - name: video_played_50
+        description: "X: video plays reaching 50%."
+      - name: video_played_75
+        description: "X: video plays reaching 75%."
+      - name: video_completions
+        description: "X: completed video views."
+      - name: video_views_2s
+        description: "X: 2-second video views."
+      - name: sessions
+        description: "X: web sessions."
+      - name: app_installs
+        description: "X: app installs."
+      - name: app_sign_ups
+        description: "X: app sign ups."
+      - name: app_sessions
+        description: "X: app sessions."
+      - name: app_checkouts_initiated
+        description: "X: app checkouts initiated."
+      - name: skan_app_installs
+        description: "X: SKAN app installs."
+      - name: impr_abs_top_pct
+        description: "Google: impression absolute-top share (fraction 0..1)."
+      - name: impr_top_pct
+        description: "Google: impression top share (fraction 0..1)."
+
       # --- Derived rate metrics ---
       - name: ctr
         description: clicks / impressions at campaign grain. NULL when impressions = 0.
@@ -288,6 +366,24 @@ models:
 
       - name: cpa_usd
         description: spend_usd / conversions. NULL when conversions = 0.
+
+      # --- Derived cost-per (X engagement metrics; NULL where the count is 0/NULL) ---
+      - name: cost_per_video_view_usd
+        description: spend_usd / video_views.
+      - name: cost_per_video_completion_usd
+        description: spend_usd / video_completions.
+      - name: cost_per_session_usd
+        description: spend_usd / sessions.
+      - name: cost_per_app_install_usd
+        description: spend_usd / app_installs.
+      - name: cost_per_app_signup_usd
+        description: spend_usd / app_sign_ups.
+      - name: cost_per_app_session_usd
+        description: spend_usd / app_sessions.
+      - name: cost_per_app_checkout_usd
+        description: spend_usd / app_checkouts_initiated.
+      - name: cost_per_skan_install_usd
+        description: spend_usd / skan_app_installs.
 
       # --- GA4 attribution (joined at utm_campaign grain) ---
       - name: ga4_sessions

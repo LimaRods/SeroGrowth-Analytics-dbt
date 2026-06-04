@@ -24,6 +24,20 @@ paid_agg as (
         sum(clicks)            as clicks,
         sum(engagements)       as engagements,
         sum(conversions)       as conversions,
+        sum(video_views)             as video_views,
+        sum(video_played_25)         as video_played_25,
+        sum(video_played_50)         as video_played_50,
+        sum(video_played_75)         as video_played_75,
+        sum(video_completions)       as video_completions,
+        sum(video_views_2s)          as video_views_2s,
+        sum(sessions)                as sessions,
+        sum(app_installs)            as app_installs,
+        sum(app_sign_ups)            as app_sign_ups,
+        sum(app_sessions)            as app_sessions,
+        sum(app_checkouts_initiated) as app_checkouts_initiated,
+        sum(skan_app_installs)       as skan_app_installs,
+        max(impr_abs_top_pct)        as impr_abs_top_pct,   /* non-additive %; Google is 1 row/campaign-week so max = identity */
+        max(impr_top_pct)            as impr_top_pct,
         max(data_quality_flag) as data_quality_flag
     from paid
     group by 1, 2, 3, 4, 5, 6, 7, 8
@@ -76,12 +90,36 @@ final as (
         p.clicks,
         p.engagements,
         p.conversions,
+        p.video_views,
+        p.video_played_25,
+        p.video_played_50,
+        p.video_played_75,
+        p.video_completions,
+        p.video_views_2s,
+        p.sessions,
+        p.app_installs,
+        p.app_sign_ups,
+        p.app_sessions,
+        p.app_checkouts_initiated,
+        p.skan_app_installs,
+        p.impr_abs_top_pct,
+        p.impr_top_pct,
 
         /* Derived metrics */
         case when p.impressions > 0 then round(p.clicks / p.impressions::float, 6) end      as ctr,
         case when p.impressions > 0 then round(p.spend_usd * 1000.0 / p.impressions, 4) end as cpm_usd,
         case when p.clicks       > 0 then round(p.spend_usd / p.clicks, 4) end              as cpc_usd,
         case when p.conversions  > 0 then round(p.spend_usd / p.conversions::float, 4) end   as cpa_usd,
+
+        /* Derived cost-per (X engagement metrics; NULL where the count is NULL/0) */
+        case when p.video_views             > 0 then round(p.spend_usd / p.video_views, 4) end             as cost_per_video_view_usd,
+        case when p.video_completions       > 0 then round(p.spend_usd / p.video_completions, 4) end       as cost_per_video_completion_usd,
+        case when p.sessions                > 0 then round(p.spend_usd / p.sessions, 4) end                as cost_per_session_usd,
+        case when p.app_installs            > 0 then round(p.spend_usd / p.app_installs, 4) end            as cost_per_app_install_usd,
+        case when p.app_sign_ups            > 0 then round(p.spend_usd / p.app_sign_ups, 4) end            as cost_per_app_signup_usd,
+        case when p.app_sessions            > 0 then round(p.spend_usd / p.app_sessions, 4) end            as cost_per_app_session_usd,
+        case when p.app_checkouts_initiated > 0 then round(p.spend_usd / p.app_checkouts_initiated, 4) end as cost_per_app_checkout_usd,
+        case when p.skan_app_installs       > 0 then round(p.spend_usd / p.skan_app_installs, 4) end       as cost_per_skan_install_usd,
 
         /* GA4 attribution (campaign grain) */
         g.ga4_sessions,
