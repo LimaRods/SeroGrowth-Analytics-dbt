@@ -34,6 +34,8 @@ joined as (
         f.engagements,
         f.conversions,
         f.cost_per_conversion,
+        f.impr_abs_top_pct,
+        f.impr_top_pct,
         -- derived rates (CTR/CPM/CPC computed in dbt, not stored)
         case when f.impressions > 0 then round(f.clicks / f.impressions::float, 6) end           as ctr,
         case when f.impressions > 0 then round(f.spend_native * 1000.0 / f.impressions, 4) end   as cpm_native,

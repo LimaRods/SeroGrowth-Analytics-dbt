@@ -36,6 +36,18 @@ joined as (
         f.reach,
         f.frequency,
         f.link_clicks AS clicks,
+        f.video_views,
+        f.video_played_25,
+        f.video_played_50,
+        f.video_played_75,
+        f.video_completions,
+        f.video_views_2s,
+        f.sessions,
+        f.app_installs,
+        f.app_sign_ups,
+        f.app_sessions,
+        f.app_checkouts_initiated,
+        f.skan_app_installs,
         f.status                                                        as ad_group_status,
         case
             when fx.usd_rate is null and coalesce(c.currency_code, cl.x_currency) != 'USD'
