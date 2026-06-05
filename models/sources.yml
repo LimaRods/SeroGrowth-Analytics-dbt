@@ -146,7 +146,6 @@ sources:
       - name: fct_linkedin_daily
       - name: campaigns_google
       - name: fct_google_weekly
-      - name: campaigns_ga4
       - name: fct_ga4_weekly
 
 

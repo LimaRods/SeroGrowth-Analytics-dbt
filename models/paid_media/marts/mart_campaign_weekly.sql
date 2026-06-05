@@ -50,16 +50,26 @@ ga4 as (
        (utm_content NULL) fallback row — never both — per the schema doc. */
     select
         client_id,
-        utm_campaign,
+        lower(trim(utm_campaign))   as utm_campaign_key,
         week_date,
         sum(ga4_sessions)     as ga4_sessions,
         sum(ga4_users)        as ga4_users,
         sum(engaged_sessions) as engaged_sessions,
+        sum(new_users)        as new_users,
+        sum(returning_users)  as returning_users,
+        sum(event_count)      as event_count,
         sum(key_events)       as key_events,
+        sum(total_revenue)    as total_revenue,
         case when sum(ga4_sessions) > 0
-             then round(sum(engaged_sessions) / sum(ga4_sessions)::float, 4)
-        end                   as engagement_rate
+             then round(sum(engaged_sessions) / sum(ga4_sessions)::float, 6)
+        end                   as engagement_rate,
+        avg(avg_session_time)                 as avg_session_time,
+        avg(events_per_session)               as events_per_session,
+        avg(session_key_event_rate)           as session_key_event_rate,
+        avg(user_key_event_rate)              as user_key_event_rate,
+        avg(engaged_sessions_per_active_user) as engaged_sessions_per_active_user
     from {{ ref('stg_ga4_weekly') }}
+    where utm_campaign is not null
     group by 1, 2, 3
 ),
 
@@ -76,6 +86,7 @@ final as (
         cl.client_name,
         p.campaign_id,
         p.campaign_name,
+        initcap(replace(p.campaign_name, '-', ' '))    as campaign_label,
         p.utm_campaign,
         p.campaign_objective,
 
@@ -125,15 +136,24 @@ final as (
         g.ga4_sessions,
         g.ga4_users,
         g.engaged_sessions,
+        g.new_users,
+        g.returning_users,
+        g.event_count,
         g.key_events,
+        g.total_revenue,
         g.engagement_rate,
+        g.avg_session_time,
+        g.events_per_session,
+        g.session_key_event_rate,
+        g.user_key_event_rate,
+        g.engaged_sessions_per_active_user,
 
         p.data_quality_flag
     from paid_agg p
     left join ga4 g
-        on  g.client_id    = p.client_id
-        and g.utm_campaign = p.utm_campaign
-        and g.week_date    = p.week_date
+        on  g.client_id        = p.client_id
+        and g.utm_campaign_key = lower(trim(p.utm_campaign))
+        and g.week_date        = p.week_date
     left join clients cl
         on cl.client_id = p.client_id
 )

@@ -54,7 +54,10 @@ models:
           - not_null
 
       - name: campaign_name
-        description: Raw campaign name from the export.
+        description: Campaign name from the export (naming-standard slug, e.g. sero-shelby-global-x-website-traffic-apr-26).
+
+      - name: campaign_label
+        description: Friendly campaign name for display (hyphens → spaces, title-cased).
 
       - name: ad_group_id
         description: |
@@ -62,10 +65,13 @@ models:
           or NULL for Google (no sub-campaign grain).
 
       - name: ad_group_name
-        description: Human-readable ad-group / ad-set name. NULL for Google.
+        description: Ad-group / ad-set name (naming-standard slug). NULL for Google.
+
+      - name: ad_group_label
+        description: Friendly ad-group name for display (hyphens → spaces, title-cased). NULL for Google.
 
       - name: utm_campaign
-        description: Slugified full campaign name (lowercase-hyphen). Join key to GA4 at campaign grain.
+        description: Campaign name verbatim (= GA4 'Session campaign'). Join key to GA4.
 
       - name: utm_content
         description: |
@@ -206,6 +212,23 @@ models:
       - name: engagement_rate
         description: GA4 engagement_rate as reported (engaged_sessions / sessions).
 
+      - name: new_users
+        description: GA4 new users (User Acquisition export).
+      - name: returning_users
+        description: GA4 returning users (User Acquisition export).
+      - name: event_count
+        description: GA4 total event count.
+      - name: total_revenue
+        description: GA4 total revenue.
+      - name: events_per_session
+        description: GA4 events per session (averaged at this grain).
+      - name: session_key_event_rate
+        description: GA4 session key-event rate (fraction).
+      - name: user_key_event_rate
+        description: GA4 user key-event rate (fraction).
+      - name: engaged_sessions_per_active_user
+        description: GA4 engaged sessions per active user.
+
       - name: attribution_join_tier
         description: |
           How the GA4 row matched: 'ad_group' when utm_content matched a GA4 row,
@@ -277,10 +300,13 @@ models:
           - not_null
 
       - name: campaign_name
-        description: Raw campaign name from the export.
+        description: Campaign name from the export (naming-standard slug).
+
+      - name: campaign_label
+        description: Friendly campaign name for display (hyphens → spaces, title-cased).
 
       - name: utm_campaign
-        description: Slugified full campaign name. GA4 join key at campaign grain.
+        description: Campaign name verbatim (= GA4 'Session campaign'). GA4 join key at campaign grain.
 
       - name: campaign_objective
         description: |
@@ -403,6 +429,25 @@ models:
 
       - name: engagement_rate
         description: Recomputed from the aggregated sums (engaged_sessions / ga4_sessions).
+
+      - name: new_users
+        description: GA4 new users summed to campaign grain.
+      - name: returning_users
+        description: GA4 returning users summed to campaign grain.
+      - name: event_count
+        description: GA4 total event count summed to campaign grain.
+      - name: total_revenue
+        description: GA4 total revenue summed to campaign grain.
+      - name: avg_session_time
+        description: GA4 avg engagement time per session (averaged at campaign grain).
+      - name: events_per_session
+        description: GA4 events per session (averaged at campaign grain).
+      - name: session_key_event_rate
+        description: GA4 session key-event rate (fraction).
+      - name: user_key_event_rate
+        description: GA4 user key-event rate (fraction).
+      - name: engaged_sessions_per_active_user
+        description: GA4 engaged sessions per active user.
 
       - name: data_quality_flag
         description: |
