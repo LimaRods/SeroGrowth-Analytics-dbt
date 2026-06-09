@@ -348,7 +348,7 @@ models:
         description: Engagement count summed to campaign grain. NULL contribution from X.
 
       - name: conversions
-        description: Conversions summed to campaign grain. Google is fractional.
+        description: Conversions summed to campaign grain (Only availabe on Google Ads). Google is fractional.
 
       # --- Channel-specific engagement metrics (summed; NULL for channels they don't apply to) ---
       - name: video_views
