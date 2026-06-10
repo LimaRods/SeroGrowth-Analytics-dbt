@@ -48,8 +48,8 @@ models:
 
   - name: stg_linkedin_daily
     description: |
-      LinkedIn Ads daily facts at ad grain, joined with campaign + client dims and FX rates.
-      Grain: (campaign_id, ad_set_id, ad_id, day_date) — same as PAID_MEDIA_DB.DEV.fct_linkedin_daily.
+      LinkedIn Ads daily facts at ad-set grain, joined with campaign + client dims and FX rates.
+      Grain: (campaign_id, ad_set_id, day_date) — same as PAID_MEDIA_DB.DEV.fct_linkedin_daily.
     columns:
       - name: id
         data_tests:
@@ -65,15 +65,14 @@ models:
       - name: ad_set_id
         data_tests:
           - not_null
-      - name: ad_id
-        data_tests:
-          - not_null
       - name: day_date
         data_tests:
           - not_null
       - name: spend_native
         data_tests:
           - not_null
+      - name: ad_set_daily_budget
+        description: Ad-set 'Daily Budget' from the export. Surfaced (MAX per ad set) in dim_budget as daily_linkedin_budget; not in the metric marts.
       - name: ad_set_cost_type
         description: LinkedIn cost type. Nullable when the export doesn't expose it.
         data_tests:
