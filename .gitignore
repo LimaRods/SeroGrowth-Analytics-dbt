@@ -4,3 +4,6 @@ target/
 dbt_packages/
 logs/
 dbt_cloud.yml
+dbt_internal_packages/
+profiles.yml
+.user.yml

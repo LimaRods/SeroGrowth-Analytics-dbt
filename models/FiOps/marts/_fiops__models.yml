@@ -1,0 +1,35 @@
+version: 2
+
+models:
+  - name: dim_deal_current
+    description: >
+      The current state of each deal — the latest snapshot per deal_id, derived
+      from the append-only CORE.deal_snapshots. One row per deal.
+    columns:
+      - name: deal_id
+        description: Business key of the deal.
+        data_tests:
+          - unique
+          - not_null
+      - name: snapshot_at
+        description: Capture time of the winning (latest) snapshot.
+        data_tests:
+          - not_null
+
+  - name: deal_events_current
+    description: >
+      Deal events enriched with the resolved contract (client_id, template,
+      version) and the deal's current attributes. Convenience read model over
+      CORE.deal_events; one row per event.
+    columns:
+      - name: event_id
+        description: Unique event identifier.
+        data_tests:
+          - unique
+          - not_null
+      - name: contract_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_contracts')
+                field: contract_id

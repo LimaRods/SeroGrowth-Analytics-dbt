@@ -38,6 +38,18 @@ clean-targets:         # directories to be removed by `dbt clean`
 models:
   sero_analytics:
 
+    # Back-office contract engine read side. Source of truth is OPERATION_DB
+    # (engine-written, append-only); models land in ANALYTICAL_LAYER, in the
+    # target schema of the active environment (dev: dbt_dolfo, prod: sero_x).
+    FiOps:
+      +database: ANALYTICAL_LAYER
+      staging:
+        +materialized: view
+      marts:
+        # Current-state projections: views so they stay always-live against the
+        # append-only source — identical semantics to the dropped DDL views.
+        +materialized: view
+
     Solstice:
       +database: solstice_analytics
       staging:

@@ -1,0 +1,37 @@
+version: 2
+
+sources:
+  - name: operation_db
+    description: >
+      Operational landing layer written by the contract engine — the append-only
+      source of truth. dbt only reads it.
+    # Env-aware: dev reads the dev sandbox; preprod & prod read OPERATION_DB.
+    database: "{{ 'OPERATION_DEV_DB' if target.name == 'dev' else 'OPERATION_DB' }}"
+    schema: CORE
+    tables:
+      - name: deal_snapshots
+        description: Append-only deal projection snapshots (one immutable row per save_deal).
+        columns:
+          - name: deal_id
+            description: Business key of the deal.
+          - name: snapshot_at
+            description: When this projection state was captured.
+      - name: deal_events
+        description: Append-only immutable deal facts, ordered by event_index within a deal.
+        columns:
+          - name: event_id
+            data_tests: [unique, not_null]
+          - name: deal_id
+          - name: event_index
+
+  - name: contract
+    description: Contract templates, deployed contracts and the field registry.
+    # Env-aware: dev reads the dev sandbox; preprod & prod read OPERATION_DB.
+    database: "{{ 'OPERATION_DEV_DB' if target.name == 'dev' else 'OPERATION_DB' }}"
+    schema: CONTRACT
+    tables:
+      - name: contracts
+        description: Deployed client runtimes. contract_id resolves template + version + client_id.
+        columns:
+          - name: contract_id
+            data_tests: [unique, not_null]
