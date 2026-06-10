@@ -48,7 +48,7 @@ models:
       marts:
         # Current-state projections: views so they stay always-live against the
         # append-only source — identical semantics to the dropped DDL views.
-        +materialized: view
+        +materialized: table
 
     Solstice:
       +database: solstice_analytics

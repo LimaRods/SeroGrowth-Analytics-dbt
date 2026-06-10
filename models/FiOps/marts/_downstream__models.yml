@@ -1,0 +1,54 @@
+version: 2
+
+# Prototype downstream marts across business venues. Built on the populated
+# source of truth (deal_events / deal_snapshots / executions / contracts).
+# Models tagged "structural" read not-yet-populated REGISTRY/OPS tables and
+# return zero rows until those are seeded.
+
+models:
+  # ── shared dimension ──────────────────────────────────────────────
+  - name: dim_contract
+    description: One row per deployed contract, enriched with its template (conventions, hash).
+    columns:
+      - name: contract_id
+        data_tests: [unique, not_null]
+
+  # ── REPORTING ─────────────────────────────────────────────────────
+  - name: rpt_client_book
+    description: >
+      Client reporting — current book: one row per (client, deal) at latest
+      state, with venue / jurisdiction / currency surfaced from deal_terms.
+  - name: rpt_fund_cota_history
+    description: Client reporting — fund NAV cota history (one row per published cota).
+  - name: rpt_trade_settlements
+    description: Client/ops reporting — equity settlement blotter (cash, fees, cost basis).
+
+  # ── RISK ──────────────────────────────────────────────────────────
+  - name: risk_margin_calls
+    description: Risk — TRS margin-call alert log (one row per breach).
+  - name: risk_trs_mtm_latest
+    description: Risk — current synthetic exposure (latest mark-to-market per TRS deal).
+    columns:
+      - name: deal_id
+        data_tests: [unique, not_null]
+  - name: risk_exposure_by_dimension
+    description: Risk — aggregate TRS exposure by venue / jurisdiction / currency.
+
+  # ── COMPLIANCE / AUDIT ────────────────────────────────────────────
+  - name: audit_corrections
+    description: Compliance — correction audit trail (field old→new, reason, reviewer).
+  - name: audit_human_review
+    description: Compliance — human-in-the-loop log (reviewed or low-confidence facts).
+  - name: audit_execution_chain
+    description: >
+      Compliance — execution-chain tamper-evidence. chain_ok = FALSE flags a
+      broken previous_execution_hash link.
+    columns:
+      - name: execution_id
+        data_tests: [unique, not_null]
+
+  # ── OPS ───────────────────────────────────────────────────────────
+  - name: ops_execution_throughput
+    description: Ops — execution volume by source connector, instrument and status.
+  - name: ops_review_queue
+    description: Ops — human-review backlog. STRUCTURAL (empty until OPS.human_review_queue is written).

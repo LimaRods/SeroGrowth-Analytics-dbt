@@ -1,21 +1,42 @@
 version: 2
 
+# ════════════════════════════════════════════════════════════════════
+# OPERATION_DB — the operational landing layer written by the contract
+# engine. dbt only READS it. One dbt source per schema (CORE / CONTRACT /
+# REGISTRY / OPS).
+#
+# Which database each environment READS is resolved by:
+#   env_var('OPERATION_DB_NAME', <'OPERATION_DEV_DB' if target.name=='dev' else 'OPERATION_DB'>)
+# i.e. an explicit OPERATION_DB_NAME env var wins (set it per dbt Cloud
+# environment, where target.name is 'default'); if unset it falls back to the
+# target name (local runs). Net: dev → OPERATION_DEV_DB; preprod & prod →
+# OPERATION_DB. Same env var the engine's run_ddl.py / loader use.
+# (Model OUTPUTS go to ANALYTICAL_LAYER — DBT_DOLFO/PREPROD/SERO_X per the
+# environment's schema — set there, not here.)
+#
+# Population status (2026-06): CONTRACT.contracts/contract_templates and
+# CORE.executions/deal_events/deal_snapshots carry data. REGISTRY, OPS and
+# the remaining CONTRACT/CORE tables are declared here but are not yet
+# populated by the engine/loader — models built on them are structural
+# prototypes (correct shape, zero rows) until those tables are seeded.
+# ════════════════════════════════════════════════════════════════════
+
 sources:
-  - name: operation_db
-    description: >
-      Operational landing layer written by the contract engine — the append-only
-      source of truth. dbt only reads it.
-    # Env-aware: dev reads the dev sandbox; preprod & prod read OPERATION_DB.
-    database: "{{ 'OPERATION_DEV_DB' if target.name == 'dev' else 'OPERATION_DB' }}"
+  # ── CORE: append-only event store + deal projections (source of truth) ──
+  - name: core
+    description: Append-only event store and deal projections — the source of truth.
+    database: "{{ env_var('OPERATION_DB_NAME', 'OPERATION_DEV_DB' if target.name == 'dev' else 'OPERATION_DB') }}"
     schema: CORE
     tables:
-      - name: deal_snapshots
-        description: Append-only deal projection snapshots (one immutable row per save_deal).
+      - name: executions
+        description: Append-only contract calls, hash-chained per contract via previous_execution_hash.
         columns:
+          - name: execution_id
+            data_tests: [unique, not_null]
+          - name: contract_id
           - name: deal_id
-            description: Business key of the deal.
-          - name: snapshot_at
-            description: When this projection state was captured.
+          - name: execution_hash
+          - name: previous_execution_hash
       - name: deal_events
         description: Append-only immutable deal facts, ordered by event_index within a deal.
         columns:
@@ -23,11 +44,33 @@ sources:
             data_tests: [unique, not_null]
           - name: deal_id
           - name: event_index
+          - name: event_type
+          - name: payload
+            description: VARIANT event data (schema-on-read).
+          - name: metadata
+            description: VARIANT — source_id, correlation_id, confidence_score, reviewed_by.
+      - name: deal_snapshots
+        description: Append-only deal projection snapshots (one immutable row per save_deal).
+        columns:
+          - name: deal_id
+            description: Business key of the deal.
+          - name: snapshot_at
+            description: When this projection state was captured.
+          - name: deal_terms
+            description: VARIANT — instrument economic setup (incl. venue, jurisdiction).
+          - name: references
+            description: VARIANT — external reference ids.
+      - name: deal_references
+        description: External reference ids per (deal, source). NOT YET POPULATED.
+        columns:
+          - name: deal_id
+          - name: source_id
+          - name: reference_type
 
+  # ── CONTRACT: templates, deployments, field registry, source routing ──
   - name: contract
-    description: Contract templates, deployed contracts and the field registry.
-    # Env-aware: dev reads the dev sandbox; preprod & prod read OPERATION_DB.
-    database: "{{ 'OPERATION_DEV_DB' if target.name == 'dev' else 'OPERATION_DB' }}"
+    description: Contract templates, deployed client contracts, the field registry and source routing.
+    database: "{{ env_var('OPERATION_DB_NAME', 'OPERATION_DEV_DB' if target.name == 'dev' else 'OPERATION_DB') }}"
     schema: CONTRACT
     tables:
       - name: contracts
@@ -35,3 +78,87 @@ sources:
         columns:
           - name: contract_id
             data_tests: [unique, not_null]
+          - name: contract_template_id
+          - name: contract_version
+          - name: client_id
+      - name: contract_templates
+        description: Reusable, versioned contract logic (the "bytecode").
+        columns:
+          - name: contract_template_id
+          - name: contract_version
+          - name: template_hash
+          - name: conventions
+            description: VARIANT — day_count, rate_basis, settlement, compounding.
+      - name: template_field_registry
+        description: The contract "ABI" — types/validates VARIANT payloads downstream. NOT YET POPULATED.
+        columns:
+          - name: contract_template_id
+          - name: field_group
+          - name: field_name
+      - name: contract_sources
+        description: Per-contract source routing (which source covers which fields). NOT YET POPULATED.
+        columns:
+          - name: contract_id
+          - name: source_id
+
+  # ── REGISTRY: reference / master data (conformed dimensions). NOT YET POPULATED ──
+  - name: registry
+    description: Reference & master data — conformed dimensions. NOT YET POPULATED (seed pending).
+    database: "{{ env_var('OPERATION_DB_NAME', 'OPERATION_DEV_DB' if target.name == 'dev' else 'OPERATION_DB') }}"
+    schema: REGISTRY
+    tables:
+      - name: clients
+        description: Client legal entities (asset managers, fund admins).
+        columns:
+          - name: client_id
+      - name: legal_entities
+        description: Counterparties / custodians / brokers / issuers (LEI, CNPJ).
+        columns:
+          - name: entity_id
+      - name: entity_roles
+        description: Roles a legal entity plays (issuer | custodian | broker | counterparty | exchange | clearing).
+      - name: securities
+        description: Instrument master (ticker, ISIN, asset class).
+        columns:
+          - name: security_id
+      - name: sources
+        description: Data connectors (broker | custodian | market_data | clearing | manual | system).
+        columns:
+          - name: source_id
+      - name: asset_classes
+        description: Asset-class code table (derivative, equity, fund, system).
+      - name: instrument_types
+        description: Instrument-type code table (trs, equity_trade, nav_calculation, ...).
+      - name: currencies
+        description: ISO-4217 currency code table.
+      - name: business_calendars
+        description: Settlement calendars (B3, ANBIMA, ...).
+      - name: calendar_holidays
+        description: Holiday dates per calendar.
+      - name: users
+        description: Ops/reviewer/admin users (e.g. reviewers of corrections).
+        columns:
+          - name: user_id
+
+  # ── OPS: ingestion runs/jobs, intake exceptions, human-review queue. NOT YET POPULATED ──
+  - name: ops
+    description: Operational layer — ingestion runs/jobs, intake exceptions, human-review queue. NOT YET POPULATED.
+    database: "{{ env_var('OPERATION_DB_NAME', 'OPERATION_DEV_DB' if target.name == 'dev' else 'OPERATION_DB') }}"
+    schema: OPS
+    tables:
+      - name: ingestion_runs
+        description: One row per end-to-end workflow run (correlation_id).
+        columns:
+          - name: correlation_id
+      - name: ingestion_jobs
+        description: One row per data pull from one source (ingestion_id).
+        columns:
+          - name: ingestion_id
+      - name: ingestion_intake
+        description: Unmatched/exception records awaiting deal matching.
+        columns:
+          - name: intake_id
+      - name: human_review_queue
+        description: Live human-review work queue (low-confidence / corrections needing sign-off).
+        columns:
+          - name: review_id
