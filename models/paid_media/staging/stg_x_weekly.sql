@@ -32,6 +32,7 @@ joined as (
         coalesce(c.currency_code, cl.x_currency)                        as currency_code,
         round(f.spend_native * coalesce(fx.usd_rate, 1.0), 2)            as spend_usd,
         f.ad_group_total_budget,
+        round(f.ad_group_total_budget * coalesce(fx.usd_rate, 1.0), 2)   as ad_group_total_budget_usd,
         f.impressions,
         f.reach,
         f.frequency,

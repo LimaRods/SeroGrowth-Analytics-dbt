@@ -3,6 +3,58 @@ version: 2
 models:
 
   # ===========================================================================
+  - name: dim_budget
+    description: |
+      Budget per ad group / ad set, per client + campaign, with a separate budget
+      column per channel. Budget is a property of the ad group/ad set (not
+      time-varying), so each is the MAX across the loaded weeks per unit.
+        x_total_budget       → X 'Ad group total budget' (a TOTAL budget)
+        daily_linkedin_budget → LinkedIn 'Daily Budget' (a DAILY budget)
+        google_total_budget   → placeholder; the Google export preset has no
+                                budget column today, so it is always NULL.
+      Grain: one row per (channel_id, client_id, campaign_id, ad_group_id).
+      Kept separate from the metric marts on purpose — budget never enters
+      mart_campaign_weekly / mart_ad_group_weekly.
+    columns:
+      - name: channel_id
+        description: Source channel.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [x_ads, linkedin_ads]
+      - name: client_id
+        description: FK to clients.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: source('paid_media', 'clients')
+                field: client_id
+      - name: client_name
+        description: Client display name, looked up from clients dim.
+      - name: campaign_id
+        description: Platform-native campaign ID the ad group / ad set belongs to.
+        data_tests:
+          - not_null
+      - name: campaign_name
+        description: Campaign name from the export (for context — which campaign owns this ad group/set).
+      - name: ad_group_id
+        description: X ad-group ID or LinkedIn ad-set ID (mapped to the shared slot).
+        data_tests:
+          - not_null
+      - name: ad_group_name
+        description: Ad-group / ad-set name.
+      - name: x_total_budget
+        description: MAX total budget for an X ad group, converted to USD via usd_fx_rates (same as spend_usd). NULL for non-X rows.
+      - name: daily_linkedin_budget
+        description: MAX daily budget for a LinkedIn ad set, in native `currency_code` (not FX-converted). NULL for non-LinkedIn rows.
+      - name: google_total_budget
+        description: Google ad budget. Placeholder — the Google export preset has no budget column, so always NULL today.
+    
+
+
+  # ===========================================================================
   - name: mart_ad_group_weekly
     description: |
       Finest sub-campaign grain per channel, weekly. The dashboard-ready table

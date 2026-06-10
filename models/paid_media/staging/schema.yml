@@ -48,8 +48,8 @@ models:
 
   - name: stg_linkedin_daily
     description: |
-      LinkedIn Ads daily facts at ad grain, joined with campaign + client dims and FX rates.
-      Grain: (campaign_id, ad_set_id, ad_id, day_date) — same as PAID_MEDIA_DB.DEV.fct_linkedin_daily.
+      LinkedIn Ads daily facts at ad-set grain, joined with campaign + client dims and FX rates.
+      Grain: (campaign_id, ad_set_id, day_date) — same as PAID_MEDIA_DB.DEV.fct_linkedin_daily.
     columns:
       - name: id
         data_tests:
@@ -65,15 +65,14 @@ models:
       - name: ad_set_id
         data_tests:
           - not_null
-      - name: ad_id
-        data_tests:
-          - not_null
       - name: day_date
         data_tests:
           - not_null
       - name: spend_native
         data_tests:
           - not_null
+      - name: ad_set_daily_budget
+        description: Ad-set 'Daily Budget' from the export. Surfaced (MAX per ad set) in dim_budget as daily_linkedin_budget; not in the metric marts.
       - name: ad_set_cost_type
         description: LinkedIn cost type. Nullable when the export doesn't expose it.
         data_tests:
@@ -132,14 +131,15 @@ models:
 
   - name: stg_ga4_weekly
     description: |
-      GA4 weekly attribution joined with the GA4 campaign registry.
-      Grain: (ga4_campaign_id, utm_content, week_date).
+      GA4 weekly attribution keyed by the UTM grain (matches the paid channels'
+      utm_campaign / utm_content). Combines the Traffic + User Acquisition exports.
+      Grain: (client_id, week_date, utm_source_medium, utm_campaign, utm_content).
     columns:
       - name: id
         data_tests:
           - unique
           - not_null
-      - name: ga4_campaign_id
+      - name: client_id
         data_tests:
           - not_null
       - name: week_date
