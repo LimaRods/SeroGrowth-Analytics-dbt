@@ -46,13 +46,13 @@ models:
       - name: ad_group_name
         description: Ad-group / ad-set name.
       - name: x_total_budget
-        description: MAX total budget for an X ad group, in `currency_code`. NULL for non-X rows.
+        description: MAX total budget for an X ad group, converted to USD via usd_fx_rates (same as spend_usd). NULL for non-X rows.
       - name: daily_linkedin_budget
-        description: MAX daily budget for a LinkedIn ad set, in `currency_code`. NULL for non-LinkedIn rows.
+        description: MAX daily budget for a LinkedIn ad set, in native `currency_code` (not FX-converted). NULL for non-LinkedIn rows.
       - name: google_total_budget
         description: Google ad budget. Placeholder — the Google export preset has no budget column, so always NULL today.
       - name: currency_code
-        description: ISO 4217 currency of the budget (per campaign; falls back to clients.*_currency at staging).
+        description: Currency of this row's budget — 'USD' for X (FX-converted), native campaign currency for LinkedIn.
 
 
   # ===========================================================================

@@ -1,7 +1,10 @@
 /* dim_budget — budget per ad group / ad set, per client + campaign, with a
    separate budget column per channel (NULL for the channels a row isn't from).
-     X        → x_total_budget       ('Ad group total budget', a TOTAL budget)
-     LinkedIn → daily_linkedin_budget ('Daily Budget', a DAILY budget)
+     X        → x_total_budget       ('Ad group total budget', a TOTAL budget) —
+                converted to USD via usd_fx_rates (same as spend_usd); so X rows
+                carry currency_code = 'USD'.
+     LinkedIn → daily_linkedin_budget ('Daily Budget', a DAILY budget) — kept in
+                native currency_code (not FX-converted).
      Google   → google_total_budget   (placeholder — the Google export preset has
                 no budget column today, so it is always NULL until one is added)
    Budget is a property of the ad group/ad set (not time-varying), so we take
@@ -17,12 +20,12 @@ with x as (
         campaign_name,
         ad_group_id,
         ad_group_name,
-        currency_code,
-        max(ad_group_total_budget)         as x_total_budget,
+        'USD'                              as currency_code,   /* budget converted to USD (see ad_group_total_budget_usd) */
+        max(ad_group_total_budget_usd)     as x_total_budget,
         cast(null as number(12,2))         as daily_linkedin_budget,
         cast(null as number(12,2))         as google_total_budget
     from {{ ref('stg_x_weekly') }}
-    where ad_group_total_budget is not null
+    where ad_group_total_budget_usd is not null
     group by 1, 2, 3, 4, 5, 6, 7
 ),
 
@@ -64,8 +67,7 @@ final as (
         u.ad_group_name,
         u.x_total_budget,
         u.daily_linkedin_budget,
-        u.google_total_budget,
-        u.currency_code
+        u.google_total_budget
     from unioned u
     left join clients cl
         on cl.client_id = u.client_id
