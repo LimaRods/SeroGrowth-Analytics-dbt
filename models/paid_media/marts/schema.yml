@@ -51,8 +51,7 @@ models:
         description: MAX daily budget for a LinkedIn ad set, in native `currency_code` (not FX-converted). NULL for non-LinkedIn rows.
       - name: google_total_budget
         description: Google ad budget. Placeholder — the Google export preset has no budget column, so always NULL today.
-      - name: currency_code
-        description: Currency of this row's budget — 'USD' for X (FX-converted), native campaign currency for LinkedIn.
+    
 
 
   # ===========================================================================

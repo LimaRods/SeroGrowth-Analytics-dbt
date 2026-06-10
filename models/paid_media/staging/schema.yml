@@ -131,14 +131,15 @@ models:
 
   - name: stg_ga4_weekly
     description: |
-      GA4 weekly attribution joined with the GA4 campaign registry.
-      Grain: (ga4_campaign_id, utm_content, week_date).
+      GA4 weekly attribution keyed by the UTM grain (matches the paid channels'
+      utm_campaign / utm_content). Combines the Traffic + User Acquisition exports.
+      Grain: (client_id, week_date, utm_source_medium, utm_campaign, utm_content).
     columns:
       - name: id
         data_tests:
           - unique
           - not_null
-      - name: ga4_campaign_id
+      - name: client_id
         data_tests:
           - not_null
       - name: week_date
