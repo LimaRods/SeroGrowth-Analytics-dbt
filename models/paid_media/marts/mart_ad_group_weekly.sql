@@ -76,6 +76,10 @@ final as (
                 then round(b.spend_usd / b.conversions::float, 4)
         end                                                             as cpa_usd,
 
+        /* Paid engagement (engagements present for X / LinkedIn / Google; NULL otherwise) */
+        case when b.impressions > 0 then round(b.engagements / b.impressions::float, 6) end as paid_engagement_rate,
+        case when b.engagements > 0 then round(b.spend_usd / b.engagements, 4) end          as cost_per_engagement_usd,
+
         /* Derived cost-per (X engagement metrics; NULL where the count is NULL/0) */
         case when b.video_views             > 0 then round(b.spend_usd / b.video_views, 4) end             as cost_per_video_view_usd,
         case when b.video_completions       > 0 then round(b.spend_usd / b.video_completions, 4) end       as cost_per_video_completion_usd,

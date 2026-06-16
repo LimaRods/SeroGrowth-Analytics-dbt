@@ -37,6 +37,7 @@ joined as (
         f.reach,
         f.frequency,
         f.link_clicks AS clicks,
+        f.engagements,
         f.video_views,
         f.video_played_25,
         f.video_played_50,

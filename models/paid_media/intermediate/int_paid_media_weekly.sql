@@ -1,7 +1,7 @@
 /* Unified weekly paid-media union across channels.
    Click model is intentionally simple: only `clicks` and `engagements` — no
    link_clicks / engagement_clicks split.
-     X        → clicks = link_clicks,  engagements = NULL (not in preset)
+     X        → clicks = link_clicks,  engagements = Engagements
      LinkedIn → clicks = clicks,       engagements = total_engagements
      Google   → clicks = clicks,       engagements = engagements
    Grain: native per channel (X ad-group, LinkedIn ad-set, Google campaign) × week. */
@@ -24,7 +24,7 @@ with x as (
         impressions,
         reach,
         clicks,
-        null::bigint         as engagements,
+        engagements,
         null::bigint         as conversions,
         objective,
         campaign_objective,

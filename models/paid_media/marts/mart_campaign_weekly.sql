@@ -122,6 +122,10 @@ final as (
         case when p.clicks       > 0 then round(p.spend_usd / p.clicks, 4) end              as cpc_usd,
         case when p.conversions  > 0 then round(p.spend_usd / p.conversions::float, 4) end   as cpa_usd,
 
+        /* Paid engagement (summed across the campaign's rows; engagements = X + LinkedIn + Google) */
+        case when p.impressions > 0 then round(p.engagements / p.impressions::float, 6) end as paid_engagement_rate,
+        case when p.engagements > 0 then round(p.spend_usd / p.engagements, 4) end          as cost_per_engagement_usd,
+
         /* Derived cost-per (X engagement metrics; NULL where the count is NULL/0) */
         case when p.video_views             > 0 then round(p.spend_usd / p.video_views, 4) end             as cost_per_video_view_usd,
         case when p.video_completions       > 0 then round(p.spend_usd / p.video_completions, 4) end       as cost_per_video_completion_usd,
