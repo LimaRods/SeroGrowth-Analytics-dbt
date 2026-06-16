@@ -177,9 +177,13 @@ models:
       - name: engagements
         description: |
           Broader engagement count (beyond clicks).
-            X        → NULL (not in the preset)
+            X        → Engagements (likes + replies + reposts + follows)
             LinkedIn → total_engagements (reactions + comments + shares + follows + …)
             Google   → Engagements column from the export
+      - name: paid_engagement_rate
+        description: engagements / impressions (paid social engagement rate). NULL when impressions = 0 or engagements NULL.
+      - name: cost_per_engagement_usd
+        description: spend_usd / engagements. NULL when engagements = 0/NULL.
 
       - name: conversions
         description: Conversions as reported by the platform. Google is fractional (NUMERIC).
@@ -397,10 +401,14 @@ models:
         description: Channel-native click count summed to campaign grain.
 
       - name: engagements
-        description: Engagement count summed to campaign grain. NULL contribution from X.
+        description: Engagement count summed to campaign grain (X + LinkedIn + Google).
+      - name: paid_engagement_rate
+        description: engagements / impressions at campaign grain (paid social engagement rate). NULL when impressions = 0.
+      - name: cost_per_engagement_usd
+        description: spend_usd / engagements at campaign grain. NULL when engagements = 0/NULL.
 
       - name: conversions
-        description: Conversions summed to campaign grain (Only availabe on Google Ads). Google is fractional.
+        description: Conversions summed to campaign grain. Populated for LinkedIn and Google; X has none. Google is fractional.
 
       # --- Channel-specific engagement metrics (summed; NULL for channels they don't apply to) ---
       - name: video_views
