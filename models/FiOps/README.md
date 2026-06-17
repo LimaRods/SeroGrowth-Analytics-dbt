@@ -97,6 +97,6 @@ dbt build --select FiOps.marts.risk
 
 Models on unpopulated sources build successfully but return **zero rows** until
 those tables are seeded. Volume in `OPERATION_DEV_DB` is produced by
-`contract-engine/simulate.py` + loaded with `data_layer/dml/load_to_snowflake.py
+`contract-engine/simulate.py` + loaded with `data_layer/ingestion/load_to_snowflake.py
 --database OPERATION_DEV_DB`. Only `OPERATION_DEV_DB` is loaded today; preprod/prod
 (`OPERATION_DB`) are empty until loaded.

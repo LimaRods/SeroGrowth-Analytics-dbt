@@ -4,7 +4,7 @@
 select
     c.client_id,
     d.contract_id,
-    d.contract_template_id,
+    c.contract_template_id,
     d.deal_id,
     d.instrument_type,
     d.asset_class,
