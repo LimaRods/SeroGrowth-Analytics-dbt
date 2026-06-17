@@ -100,7 +100,7 @@ final as (
         b.key_events,
         b.total_revenue,
         b.avg_session_time,
-        b.engagement_rate,
+        b.engagement_rate AS ga4_engagement_rate,
         b.events_per_session,
         b.session_key_event_rate,
         b.user_key_event_rate,

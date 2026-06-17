@@ -145,7 +145,7 @@ final as (
         g.event_count,
         g.key_events,
         g.total_revenue,
-        g.engagement_rate,
+        g.engagement_rate AS ga4_engagement_rate,
         g.avg_session_time,
         g.events_per_session,
         g.session_key_event_rate,
