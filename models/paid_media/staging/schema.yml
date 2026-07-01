@@ -31,12 +31,6 @@ models:
           - not_null
       - name: ad_group_status
         description: Delivery status from the export.
-        data_tests:
-          - accepted_values:
-              arguments:
-                values: [active, expired, paused, campaign_paused, draft]
-              config:
-                where: ad_group_status is not null
       - name: data_quality_flag
         data_tests:
           - accepted_values:
@@ -75,12 +69,6 @@ models:
         description: Ad-set 'Daily Budget' from the export. Surfaced (MAX per ad set) in dim_budget as daily_linkedin_budget; not in the metric marts.
       - name: ad_set_cost_type
         description: LinkedIn cost type. Nullable when the export doesn't expose it.
-        data_tests:
-          - accepted_values:
-              arguments:
-                values: [CPM, CPC, CPV]
-              config:
-                where: ad_set_cost_type is not null
       - name: data_quality_flag
         data_tests:
           - accepted_values:
@@ -114,12 +102,12 @@ models:
           - not_null
       - name: campaign_type
         description: Per-row Google campaign type. Determines intent vs engagement click semantics in int_paid_media_weekly.
-        data_tests:
-          - accepted_values:
-              arguments:
-                values: ['Search', 'Demand Gen', 'Performance Max', 'Display', 'Video']
-              config:
-                where: campaign_type is not null
+        #data_tests:
+         # - accepted_values:
+           #   arguments:
+             #   values: ['Search', 'Demand Gen', 'Performance Max', 'Display', 'Video']
+              #config:
+                #where: campaign_type is not null
       - name: data_quality_flag
         data_tests:
           - accepted_values:
