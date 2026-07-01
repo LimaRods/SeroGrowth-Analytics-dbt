@@ -1,5 +1,5 @@
 models:
-  - name: mart_ad_group_weekly
+  - name: test
     semantic_model:
       enabled: true
     agg_time_dimension: week_date
