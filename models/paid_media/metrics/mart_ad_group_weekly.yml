@@ -1,0 +1,14 @@
+models:
+  - name: mart_ad_group_weekly
+    semantic_model:
+      enabled: true
+    agg_time_dimension: week_date
+    description:
+      Mart ad group table. This tables contains the performance metrics available for each ad group in campaings on a weekly basis 
+    columns:
+      # Entities
+      - name: record_id
+        description: it represents the unique data record for each combination (week_date, ad_group_id)
+        entity:
+          type: primary
+          name: record_id
