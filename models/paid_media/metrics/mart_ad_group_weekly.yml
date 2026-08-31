@@ -1,14 +1,45 @@
 models:
-  - name: test
+  - name: mart_ad_group_weekly
     semantic_model:
       enabled: true
     agg_time_dimension: week_date
     description:
-      Mart ad group table. This tables contains the performance metrics available for each ad group in campaings on a weekly basis 
+      Mart ad group table. This tables contains the performance metrics available for each ad group/set in campaings on a weekly basis 
+
     columns:
       # Entities
       - name: record_id
-        description: it represents the unique data record for each combination (week_date, ad_group_id)
+        description: it represents the unique data record value for each combination (week_date, ad_group_id)
         entity:
           type: primary
           name: record_id
+
+      - name: channel_id
+        description: Source channel (x_ads or linkedin_ads or google_ads); the Paid Ads platform where data is pulling from
+        entity:
+          type: foreign
+          name: channel_id
+      
+      - name: client_id 
+        description: Client Id stored in a row table and encrpted following the rule = SHA256 Encoding of “<client_name> + Sero + Intelligence2025"
+        entity:
+          type: foreign 
+          name: client_id
+
+      # Dimensions
+      - name: week_date
+        granularity: week
+        dimension:
+          type: time
+          label: week
+          description: The metrics performance of Ad groups/set are quoted on a weekly basis 
+
+      - name: ad_group_name
+        description: Ad-group / ad-set name (naming-standard slug). NULL for Google
+        dimension:
+          type: categorical
+
+      - name: ad_group_label
+        description: This colummn is 1:1 with ad_group_name. The only difference is that for this column are properely formated to easily understanding. "-" removed and upper case letters is used
+          
+
